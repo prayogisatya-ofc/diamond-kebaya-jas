@@ -1,0 +1,87 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-diamond-primary: #615cf9;
+    --color-diamond-primary-dark: #4f46e5;
+    --color-diamond-primary-soft: #eef0ff;
+    --color-diamond-primary-muted: #a1a1e7;
+
+    --color-diamond-bg: #F2F1FF;
+    --color-diamond-surface: #ffffff;
+    --color-diamond-surface-soft: #f7f8ff;
+    --color-diamond-sidebar: #615cf9;
+
+    --color-diamond-accent: #f2912c;
+    --color-diamond-accent-soft: #fff2e5;
+    --color-diamond-accent-muted: #e9d3a1;
+
+    --color-diamond-text: #1f2937;
+    --color-diamond-muted: #6b7280;
+    --color-diamond-soft: #9ca3af;
+    --color-diamond-border: #e5e7f3;
+
+    --color-diamond-success: #10b981;
+    --color-diamond-success-soft: #eafbf4;
+    --color-diamond-warning: #f59e0b;
+    --color-diamond-warning-soft: #fff7e6;
+    --color-diamond-danger: #ef4444;
+    --color-diamond-danger-soft: #feecec;
+    --color-diamond-info: #3b82f6;
+    --color-diamond-info-soft: #eaf2ff;
+}
+
+@layer base {
+    html,
+    body,
+    #app {
+        max-width: 100%;
+        min-width: 0;
+        overflow-x: hidden;
+        width: 100%;
+    }
+
+    *,
+    ::before,
+    ::after {
+        box-sizing: border-box;
+    }
+
+    a,
+    button,
+    [role='button'],
+    input[type='button'],
+    input[type='submit'],
+    input[type='reset'] {
+        cursor: pointer;
+    }
+
+    button:disabled,
+    input:disabled,
+    [aria-disabled='true'] {
+        cursor: not-allowed;
+    }
+
+    .grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .grid > * {
+        min-width: 0;
+    }
+
+    main > section.grid {
+        grid-template-columns: minmax(0, 1fr);
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    main > section.grid > * {
+        min-width: 0;
+    }
+}

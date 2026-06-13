@@ -1,0 +1,813 @@
+<script setup>
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import {
+    AlertTriangle,
+    ArrowRight,
+    Banknote,
+    Bell,
+    CalendarCheck,
+    CalendarClock,
+    ChevronLeft,
+    ChevronRight,
+    Clock3,
+    CreditCard,
+    FileText,
+    HandCoins,
+    LogOut,
+    PackageCheck,
+    Plus,
+    Settings,
+    ReceiptText,
+    Sparkles,
+    TrendingUp,
+    UserRound,
+} from '@lucide/vue'
+import { computed, ref } from 'vue'
+import {
+    BarElement,
+    CategoryScale,
+    Chart as ChartJS,
+    Filler,
+    Legend,
+    LinearScale,
+    LineElement,
+    PointElement,
+    Tooltip,
+} from 'chart.js'
+import { Bar, Line } from 'vue-chartjs'
+import AppLayout from '@/Layouts/AppLayout.vue'
+import Badge from '@/Components/Badge.vue'
+import Button from '@/Components/Button.vue'
+import Card from '@/Components/Card.vue'
+import EmptyState from '@/Components/EmptyState.vue'
+import StatusBadge from '@/Components/StatusBadge.vue'
+import { useConfirm } from '@/Composables/useConfirm'
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, Tooltip, Legend)
+
+defineOptions({
+    layout: AppLayout,
+})
+
+const props = defineProps({
+    summary: {
+        type: Object,
+        required: true,
+    },
+    pickupToday: {
+        type: Array,
+        required: true,
+    },
+    returnToday: {
+        type: Array,
+        required: true,
+    },
+    overdueRentals: {
+        type: Array,
+        required: true,
+    },
+    recentRentals: {
+        type: Array,
+        required: true,
+    },
+    dailyRevenue: {
+        type: Array,
+        required: true,
+    },
+})
+
+const page = usePage()
+const user = computed(() => page.props.auth.user)
+const store = computed(() => page.props.store || {})
+const profileMenuOpen = ref(false)
+const { confirmAction } = useConfirm()
+
+async function confirmLogout() {
+    const confirmed = await confirmAction({
+        title: 'Keluar dari aplikasi?',
+        message: 'Sesi kamu akan ditutup dan perlu login lagi untuk masuk.',
+        confirmLabel: 'Ya, keluar',
+        tone: 'logout',
+    })
+
+    if (!confirmed) {
+        return
+    }
+
+    profileMenuOpen.value = false
+
+    router.post(route('logout'))
+}
+const calendarMonth = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+
+const revenueMax = computed(() => Math.max(...props.dailyRevenue.map((day) => Number(day.total || 0)), 1))
+const primaryColor = computed(() => {
+    const color = String(store.value.primary_color || '')
+
+    return /^#(?:[0-9a-fA-F]{3}){1,2}$/.test(color) ? color : '#615cf9'
+})
+const primaryDarkColor = computed(() => mixColor(primaryColor.value, '#000000', 0.18))
+const primarySoftColor = computed(() => mixColor(primaryColor.value, '#ffffff', 0.88))
+const primaryMutedColor = computed(() => mixColor(primaryColor.value, '#ffffff', 0.56))
+const primaryTransparentColor = computed(() => rgbaColor(primaryColor.value, 0.18))
+
+const todayLabel = computed(() => new Intl.DateTimeFormat('id-ID', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+}).format(new Date()))
+
+const summaryCards = computed(() => [
+    { label: 'Pendapatan hari ini', value: props.summary.revenue_today, type: 'money', icon: TrendingUp, tone: 'primary' },
+    { label: 'Pendapatan bulan ini', value: props.summary.revenue_month, type: 'money', icon: Banknote, tone: 'success' },
+    { label: 'Total DP masuk', value: props.summary.dp_total, type: 'money', icon: HandCoins, tone: 'accent' },
+    { label: 'Total pelunasan', value: props.summary.pelunasan_total, type: 'money', icon: CreditCard, tone: 'info' },
+    { label: 'Total denda', value: props.summary.penalty_total, type: 'money', icon: AlertTriangle, tone: 'warning' },
+    { label: 'Sisa belum lunas', value: props.summary.outstanding_total, type: 'money', icon: ReceiptText, tone: 'danger' },
+    { label: 'Transaksi aktif', value: props.summary.active_transactions, type: 'number', icon: PackageCheck, tone: 'primary' },
+    { label: 'Terlambat kembali', value: props.summary.overdue_count, type: 'number', icon: Clock3, tone: 'danger' },
+])
+
+const userInitials = computed(() => {
+    const names = (user.value?.name || 'User')
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+
+    return names.map((name) => name.charAt(0).toUpperCase()).join('')
+})
+
+const monthLabel = computed(() => new Intl.DateTimeFormat('id-ID', {
+    month: 'long',
+    year: 'numeric',
+}).format(calendarMonth.value))
+
+const weekdayLabels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
+
+const monthCalendarDays = computed(() => {
+    const year = calendarMonth.value.getFullYear()
+    const month = calendarMonth.value.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    const mondayOffset = (firstDay.getDay() + 6) % 7
+    const days = []
+
+    for (let index = 0; index < mondayOffset; index += 1) {
+        days.push(null)
+    }
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+        days.push(new Date(year, month, day))
+    }
+
+    while (days.length % 7 !== 0) {
+        days.push(null)
+    }
+
+    return days
+})
+
+const greeting = computed(() => {
+    const hour = new Date().getHours()
+
+    if (hour < 11) {
+        return 'Selamat pagi'
+    }
+
+    if (hour < 15) {
+        return 'Selamat siang'
+    }
+
+    if (hour < 18) {
+        return 'Selamat sore'
+    }
+
+    return 'Selamat malam'
+})
+
+const revenueChartData = computed(() => ({
+    labels: props.dailyRevenue.map((day) => formatDay(day.date)),
+    datasets: [
+        {
+            label: 'Pendapatan',
+            data: props.dailyRevenue.map((day) => Number(day.total || 0)),
+            backgroundColor: primaryColor.value,
+            hoverBackgroundColor: primaryDarkColor.value,
+            borderRadius: 14,
+            borderSkipped: false,
+            maxBarThickness: 42,
+        },
+    ],
+}))
+
+const revenueChartOptions = computed(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+        intersect: false,
+        mode: 'index',
+    },
+    plugins: {
+        legend: {
+            display: false,
+        },
+        tooltip: {
+            backgroundColor: '#1f2937',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            padding: 12,
+            cornerRadius: 14,
+            displayColors: false,
+            callbacks: {
+                label(context) {
+                    return `Pendapatan ${formatMoney(context.parsed.y)}`
+                },
+            },
+        },
+    },
+    scales: {
+        x: {
+            grid: {
+                display: false,
+            },
+            border: {
+                display: false,
+            },
+            ticks: {
+                color: '#6b7280',
+                font: {
+                    size: 11,
+                    weight: 700,
+                },
+            },
+        },
+        y: {
+            beginAtZero: true,
+            grid: {
+                color: primarySoftColor.value,
+                drawTicks: false,
+            },
+            border: {
+                display: false,
+            },
+            ticks: {
+                color: primaryMutedColor.value,
+                padding: 10,
+                callback(value) {
+                    return formatMoney(value).replace('Rp', 'Rp ')
+                },
+            },
+        },
+    },
+}))
+
+const asideRevenueChartData = computed(() => ({
+    labels: props.dailyRevenue.map((day) => formatDay(day.date).split(',')[0]),
+    datasets: [
+        {
+            label: 'Pendapatan',
+            data: props.dailyRevenue.map((day) => Number(day.total || 0)),
+            borderColor: '#ffffff',
+            backgroundColor: primaryTransparentColor.value,
+            pointBackgroundColor: primarySoftColor.value,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            tension: 0.42,
+            fill: true,
+        },
+    ],
+}))
+
+const asideRevenueChartOptions = computed(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+        intersect: false,
+        mode: 'index',
+    },
+    plugins: {
+        legend: {
+            display: false,
+        },
+        tooltip: {
+            backgroundColor: '#1f2937',
+            displayColors: false,
+            padding: 10,
+            cornerRadius: 12,
+            callbacks: {
+                label(context) {
+                    return formatMoney(context.parsed.y)
+                },
+            },
+        },
+    },
+    scales: {
+        x: {
+            grid: {
+                display: false,
+            },
+            border: {
+                display: false,
+            },
+            ticks: {
+                color: 'rgba(255,255,255,0.72)',
+                font: {
+                    size: 10,
+                    weight: 700,
+                },
+            },
+        },
+        y: {
+            display: false,
+            beginAtZero: true,
+        },
+    },
+}))
+
+const scheduleGroups = computed(() => [
+    {
+        title: 'Ambil hari ini',
+        count: props.summary.pickup_today_count,
+        items: props.pickupToday,
+        field: 'pickup_at',
+        empty: 'Tidak ada jadwal ambil hari ini.',
+        icon: CalendarCheck,
+        tone: 'accent',
+    },
+    {
+        title: 'Kembali hari ini',
+        count: props.summary.return_today_count,
+        items: props.returnToday,
+        field: 'return_due_at',
+        empty: 'Tidak ada jadwal kembali hari ini.',
+        icon: CalendarClock,
+        tone: 'primary',
+    },
+    {
+        title: 'Terlambat',
+        count: props.summary.overdue_count,
+        items: props.overdueRentals,
+        field: 'return_due_at',
+        empty: 'Tidak ada keterlambatan aktif.',
+        icon: AlertTriangle,
+        tone: 'danger',
+    },
+])
+
+function formatMoney(value) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(Number(value ?? 0))
+}
+
+function formatDate(value) {
+    if (!value) {
+        return '-'
+    }
+
+    return new Intl.DateTimeFormat('id-ID', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(new Date(value))
+}
+
+function formatDay(value) {
+    return new Intl.DateTimeFormat('id-ID', {
+        weekday: 'short',
+        day: '2-digit',
+    }).format(new Date(value))
+}
+
+function cardValue(card) {
+    return card.type === 'money' ? formatMoney(card.value) : Number(card.value ?? 0)
+}
+
+function previousMonth() {
+    calendarMonth.value = new Date(calendarMonth.value.getFullYear(), calendarMonth.value.getMonth() - 1, 1)
+}
+
+function nextMonth() {
+    calendarMonth.value = new Date(calendarMonth.value.getFullYear(), calendarMonth.value.getMonth() + 1, 1)
+}
+
+function isToday(day) {
+    if (!day) {
+        return false
+    }
+
+    const today = new Date()
+
+    return day.getFullYear() === today.getFullYear()
+        && day.getMonth() === today.getMonth()
+        && day.getDate() === today.getDate()
+}
+
+function normalizedHex(color) {
+    const value = String(color || '').replace('#', '')
+
+    if (value.length === 3) {
+        return value
+            .split('')
+            .map((character) => character + character)
+            .join('')
+    }
+
+    return value.padEnd(6, '0').slice(0, 6)
+}
+
+function hexToRgb(color) {
+    const hex = normalizedHex(color)
+
+    return {
+        r: Number.parseInt(hex.slice(0, 2), 16),
+        g: Number.parseInt(hex.slice(2, 4), 16),
+        b: Number.parseInt(hex.slice(4, 6), 16),
+    }
+}
+
+function toHex(value) {
+    return Math.max(0, Math.min(255, Math.round(value)))
+        .toString(16)
+        .padStart(2, '0')
+}
+
+function mixColor(color, targetColor, targetWeight) {
+    const base = hexToRgb(color)
+    const target = hexToRgb(targetColor)
+    const baseWeight = 1 - targetWeight
+
+    return `#${toHex(base.r * baseWeight + target.r * targetWeight)}${toHex(base.g * baseWeight + target.g * targetWeight)}${toHex(base.b * baseWeight + target.b * targetWeight)}`
+}
+
+function rgbaColor(color, alpha) {
+    const rgb = hexToRgb(color)
+
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
+}
+
+function iconBoxClass(tone) {
+    return {
+        primary: 'bg-diamond-primary-soft text-diamond-primary',
+        success: 'bg-diamond-success-soft text-emerald-600',
+        accent: 'bg-diamond-accent-soft text-diamond-accent',
+        info: 'bg-diamond-info-soft text-blue-600',
+        warning: 'bg-diamond-warning-soft text-amber-600',
+        danger: 'bg-diamond-danger-soft text-red-600',
+    }[tone] || 'bg-diamond-primary-soft text-diamond-primary'
+}
+</script>
+
+<template>
+    <Head title="Dashboard" />
+
+    <div class="grid gap-7 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div class="grid gap-7">
+            <section class="overflow-hidden rounded-[2rem] border border-white/80 bg-white p-6 sm:p-7">
+                <div class="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 text-xs font-bold uppercase text-diamond-accent">
+                            Dashboard
+                        </div>
+                        <h1 class="mt-4 text-2xl font-bold leading-tight text-diamond-text sm:text-3xl">
+                            {{ greeting }}, {{ user.name }}
+                        </h1>
+                        <p class="mt-2 max-w-2xl text-sm leading-6 text-diamond-muted">
+                            Pantau pembayaran, jadwal ambil/kembali, keterlambatan, dan transaksi terbaru dalam satu layar.
+                        </p>
+                        <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+                            <Button :href="route('rentals.create')" variant="primary">
+                                <Plus :size="18" />
+                                Buat rental
+                            </Button>
+                            <Button :href="route('reports.transactions')" variant="secondary">
+                                <FileText :size="18" />
+                                Laporan
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div class="relative hidden min-h-40 overflow-hidden rounded-[1.75rem] bg-diamond-primary-soft lg:block">
+                        <div class="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-diamond-primary/15" />
+                        <div class="absolute -bottom-10 left-8 h-32 w-32 rounded-full bg-diamond-accent/15" />
+                        <div class="relative grid h-full gap-3 p-5">
+                            <div class="self-start justify-self-end rounded-2xl bg-white px-4 py-3 text-right">
+                                <p class="text-xs font-semibold text-diamond-muted">Hari ini</p>
+                                <p class="mt-1 text-sm font-bold text-diamond-text">{{ todayLabel }}</p>
+                            </div>
+                            <div class="self-end rounded-3xl bg-diamond-primary p-4 text-white">
+                                <p class="text-xs font-semibold text-white/75">Transaksi aktif</p>
+                                <p class="mt-1 text-3xl font-bold">{{ summary.active_transactions }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <Card class="xl:hidden">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.18em] text-diamond-accent">Jadwal hari ini</p>
+                        <h2 class="mt-2 text-lg font-bold text-diamond-text">{{ todayLabel }}</h2>
+                    </div>
+                    <div class="rounded-2xl bg-diamond-accent-soft p-3 text-diamond-accent">
+                        <CalendarClock :size="22" />
+                    </div>
+                </div>
+                <div class="mt-5 grid gap-3 sm:grid-cols-3">
+                    <div v-for="group in scheduleGroups" :key="group.title" class="rounded-2xl bg-diamond-surface-soft p-4">
+                        <p class="text-sm font-semibold text-diamond-muted">{{ group.title }}</p>
+                        <p class="mt-2 text-2xl font-bold text-diamond-text">{{ group.count }}</p>
+                    </div>
+                </div>
+            </Card>
+
+            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <section
+                    v-for="card in summaryCards"
+                    :key="card.label"
+                    class="rounded-[1.75rem] border border-white/80 bg-white p-4 transition hover:border-diamond-primary/20 hover:bg-white/95 2xl:p-5"
+                >
+                    <div class="flex min-h-24 flex-col justify-between gap-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl" :class="iconBoxClass(card.tone)">
+                                <component :is="card.icon" :size="19" />
+                            </div>
+                            <p class="text-right text-[11px] font-bold uppercase tracking-[0.12em] text-diamond-soft">
+                                {{ card.type === 'money' ? 'Nominal' : 'Jumlah' }}
+                            </p>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="truncate text-xs font-semibold text-diamond-muted">{{ card.label }}</p>
+                            <p class="mt-2 whitespace-nowrap text-lg font-bold tracking-tight text-diamond-text 2xl:text-xl">{{ cardValue(card) }}</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <section class="rounded-[2rem] border border-white/80 bg-white p-6 sm:p-7">
+                <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                    <div>
+                        <h2 class="text-lg font-bold text-diamond-text">Pendapatan 7 hari</h2>
+                        <p class="mt-1 text-sm text-diamond-muted">Chart interaktif berdasarkan riwayat pembayaran masuk.</p>
+                    </div>
+                    <Badge tone="success">Hari ini {{ formatMoney(summary.revenue_today) }}</Badge>
+                </div>
+                <div class="mt-7 h-72">
+                    <Bar :data="revenueChartData" :options="revenueChartOptions" />
+                </div>
+            </section>
+
+            <div class="grid gap-5 2xl:grid-cols-3">
+                <Card v-for="group in scheduleGroups" :key="group.title">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h2 class="text-base font-bold text-diamond-text">{{ group.title }}</h2>
+                            <p class="mt-1 text-sm text-diamond-muted">{{ group.count }} transaksi</p>
+                        </div>
+                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl" :class="iconBoxClass(group.tone)">
+                            <component :is="group.icon" :size="20" />
+                        </div>
+                    </div>
+                    <div class="mt-6 grid gap-3">
+                        <Link
+                            v-for="rental in group.items"
+                            :key="rental.id"
+                            :href="route('rentals.show', rental.id)"
+                            class="rounded-2xl border border-diamond-border bg-diamond-surface-soft p-4 transition hover:border-diamond-primary/30 hover:bg-white"
+                        >
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-sm font-bold text-diamond-text">{{ rental.invoice_number }}</p>
+                                <ArrowRight class="text-diamond-soft" :size="17" />
+                            </div>
+                            <p class="mt-2 text-sm text-diamond-muted">{{ rental.customer_name || '-' }}</p>
+                            <p class="mt-1 text-xs text-diamond-soft">{{ formatDate(rental[group.field]) }}</p>
+                        </Link>
+                        <EmptyState v-if="group.items.length === 0" :title="group.empty" />
+                    </div>
+                </Card>
+            </div>
+
+            <Card :padded="false" class="overflow-hidden">
+                <div class="flex items-center justify-between gap-3 px-5 py-5 sm:px-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-diamond-text">Transaksi terbaru</h2>
+                        <p class="mt-1 text-sm text-diamond-muted">Aktivitas rental terakhir.</p>
+                    </div>
+                    <Link :href="route('rentals.index')" class="hidden text-sm font-bold text-diamond-primary hover:text-diamond-primary-dark sm:inline-flex">
+                        Lihat semua
+                    </Link>
+                </div>
+
+                <div class="grid gap-3 px-5 pb-5 sm:hidden">
+                    <Link
+                        v-for="rental in recentRentals"
+                        :key="rental.id"
+                        :href="route('rentals.show', rental.id)"
+                        class="rounded-2xl border border-diamond-border bg-diamond-surface-soft p-4"
+                    >
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="font-bold text-diamond-text">{{ rental.invoice_number }}</p>
+                                <p class="mt-1 text-sm text-diamond-muted">{{ rental.customer_name || '-' }}</p>
+                            </div>
+                            <StatusBadge :value="rental.status" />
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <p class="text-diamond-soft">Total</p>
+                                <p class="font-semibold text-diamond-text">{{ formatMoney(rental.total_amount) }}</p>
+                            </div>
+                            <div>
+                                <p class="text-diamond-soft">Sisa</p>
+                                <p class="font-semibold text-diamond-text">{{ formatMoney(rental.remaining_amount) }}</p>
+                            </div>
+                        </div>
+                    </Link>
+                    <EmptyState v-if="recentRentals.length === 0" title="Belum ada transaksi." />
+                </div>
+
+                <div class="hidden overflow-x-auto sm:block">
+                    <table class="w-full min-w-[860px] text-left text-sm">
+                        <thead class="border-y border-diamond-border bg-diamond-surface-soft text-xs uppercase tracking-wide text-diamond-muted">
+                            <tr>
+                                <th class="px-6 py-4 font-bold">Invoice</th>
+                                <th class="px-4 py-4 font-bold">Customer</th>
+                                <th class="px-4 py-4 font-bold">Status</th>
+                                <th class="px-4 py-4 font-bold">Pembayaran</th>
+                                <th class="px-4 py-4 text-right font-bold">Total</th>
+                                <th class="px-6 py-4 text-right font-bold">Sisa</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-diamond-border">
+                            <tr v-for="rental in recentRentals" :key="rental.id" class="transition hover:bg-diamond-surface-soft">
+                                <td class="px-6 py-4">
+                                    <Link :href="route('rentals.show', rental.id)" class="font-bold text-diamond-text hover:text-diamond-primary">
+                                        {{ rental.invoice_number }}
+                                    </Link>
+                                </td>
+                                <td class="px-4 py-4 text-diamond-muted">{{ rental.customer_name || '-' }}</td>
+                                <td class="px-4 py-4"><StatusBadge :value="rental.status" /></td>
+                                <td class="px-4 py-4"><StatusBadge :value="rental.payment_status" type="payment" /></td>
+                                <td class="px-4 py-4 text-right font-semibold text-diamond-text">{{ formatMoney(rental.total_amount) }}</td>
+                                <td class="px-6 py-4 text-right font-semibold text-diamond-text">{{ formatMoney(rental.remaining_amount) }}</td>
+                            </tr>
+                            <tr v-if="recentRentals.length === 0">
+                                <td class="px-6 py-8 text-center text-diamond-muted" colspan="6">Belum ada transaksi.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
+        </div>
+
+        <aside class="hidden xl:block">
+            <div class="sticky top-7 min-h-[calc(100vh-3.5rem)] rounded-[2.25rem] bg-white/90 p-6 backdrop-blur">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <Link
+                            :href="route('settings.edit')"
+                            class="flex h-10 w-10 items-center justify-center rounded-2xl bg-diamond-surface-soft text-diamond-muted transition hover:bg-diamond-primary-soft hover:text-diamond-primary"
+                            aria-label="Setting"
+                        >
+                            <Settings :size="18" />
+                        </Link>
+                    </div>
+                    <div class="relative">
+                        <button
+                            class="flex items-center gap-3 rounded-2xl px-2 py-1.5 text-left transition hover:bg-diamond-surface-soft"
+                            type="button"
+                            aria-haspopup="menu"
+                            :aria-expanded="profileMenuOpen"
+                            @click="profileMenuOpen = !profileMenuOpen"
+                        >
+                            <div class="min-w-0 text-right">
+                                <p class="max-w-32 truncate text-sm font-bold text-diamond-text">{{ user.name }}</p>
+                                <p class="truncate text-xs capitalize text-diamond-muted">{{ user.role }}</p>
+                            </div>
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-diamond-primary text-sm font-bold text-white">
+                                {{ userInitials }}
+                            </div>
+                        </button>
+
+                        <div
+                            v-if="profileMenuOpen"
+                            class="absolute right-0 top-14 z-20 w-52 rounded-3xl border border-diamond-border bg-white p-2"
+                            role="menu"
+                        >
+                            <Link
+                                :href="route('profile.edit')"
+                                class="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-diamond-text transition hover:bg-diamond-surface-soft"
+                                type="button"
+                                role="menuitem"
+                            >
+                                <UserRound :size="17" />
+                                Profil
+                            </Link>
+                            <button
+                                class="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                                type="button"
+                                role="menuitem"
+                                @click="confirmLogout"
+                            >
+                                <LogOut :size="17" />
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="mt-8">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="text-base font-bold text-diamond-text">Kalender Jadwal</h2>
+                        <div class="flex items-center gap-1">
+                            <button
+                                class="flex h-8 w-8 items-center justify-center rounded-xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-primary"
+                                type="button"
+                                aria-label="Bulan sebelumnya"
+                                @click="previousMonth"
+                            >
+                                <ChevronLeft :size="17" />
+                            </button>
+                            <button
+                                class="flex h-8 w-8 items-center justify-center rounded-xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-primary"
+                                type="button"
+                                aria-label="Bulan berikutnya"
+                                @click="nextMonth"
+                            >
+                                <ChevronRight :size="17" />
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-4 rounded-3xl bg-diamond-surface-soft p-4">
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="text-sm font-bold capitalize text-diamond-text">{{ monthLabel }}</p>
+                            <Badge tone="accent">Bulanan</Badge>
+                        </div>
+                        <div class="mt-4 grid grid-cols-7 gap-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-diamond-soft">
+                            <span v-for="label in weekdayLabels" :key="label">{{ label }}</span>
+                        </div>
+                        <div class="mt-2 grid grid-cols-7 gap-1.5">
+                            <div
+                                v-for="(day, index) in monthCalendarDays"
+                                :key="day ? day.toISOString() : `blank-${index}`"
+                                class="flex h-9 items-center justify-center rounded-2xl text-center text-sm font-bold"
+                                :class="[
+                                    !day ? 'text-transparent' : '',
+                                    day && isToday(day) ? 'bg-diamond-accent text-white' : 'bg-white text-diamond-muted',
+                                ]"
+                            >
+                                {{ day ? day.getDate() : 0 }}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mt-8">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="text-base font-bold text-diamond-text">Grafik pendapatan</h2>
+                        <span class="text-xs font-semibold text-diamond-soft">7 hari</span>
+                    </div>
+                    <div class="mt-4 rounded-[2rem] bg-diamond-primary p-5 text-white">
+                        <div class="h-44">
+                            <Line :data="asideRevenueChartData" :options="asideRevenueChartOptions" />
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mt-8">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="text-base font-bold text-diamond-text">Jadwal dekat</h2>
+                        <Badge tone="accent">Operasional</Badge>
+                    </div>
+                    <div class="mt-4 grid gap-3">
+                        <template v-for="group in scheduleGroups" :key="group.title">
+                            <Link
+                                v-for="rental in group.items.slice(0, 1)"
+                                :key="`${group.title}-${rental.id}`"
+                                :href="route('rentals.show', rental.id)"
+                                class="rounded-2xl border border-diamond-border bg-diamond-surface-soft p-4 transition hover:border-diamond-primary/40 hover:bg-white"
+                            >
+                                <div class="flex items-center justify-between gap-3">
+                                    <p class="truncate text-sm font-bold text-diamond-text">{{ rental.invoice_number }}</p>
+                                    <Badge :tone="group.tone">{{ group.title }}</Badge>
+                                </div>
+                                <p class="mt-2 truncate text-sm text-diamond-muted">{{ rental.customer_name || '-' }}</p>
+                                <p class="mt-1 text-xs text-diamond-soft">{{ formatDate(rental[group.field]) }}</p>
+                            </Link>
+                        </template>
+                        <EmptyState
+                            v-if="[...pickupToday, ...returnToday, ...overdueRentals].length === 0"
+                            title="Tidak ada jadwal mendesak."
+                            description="Pickup, return, dan overdue akan muncul di sini."
+                        />
+                    </div>
+                </section>
+            </div>
+        </aside>
+    </div>
+</template>
