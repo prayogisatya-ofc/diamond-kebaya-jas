@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('rental_package_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('rental_package_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained()->restrictOnDelete();
-            $table->foreignId('product_variant_id')->nullable()->constrained()->nullOnDelete();
+            $table->ulid('id')->primary();
+            $table->foreignUlid('rental_package_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('product_id')->constrained()->restrictOnDelete();
+            $table->foreignUlid('product_variant_id')->nullable()->constrained()->nullOnDelete();
             $table->unsignedInteger('quantity')->default(1);
             $table->decimal('default_item_price', 12, 2)->nullable();
             $table->boolean('is_optional')->default(false)->index();

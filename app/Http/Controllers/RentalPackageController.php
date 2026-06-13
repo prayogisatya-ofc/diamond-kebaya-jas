@@ -121,7 +121,7 @@ class RentalPackageController extends Controller
         $keptItemIds = collect($items)
             ->pluck('id')
             ->filter()
-            ->map(fn ($id): int => (int) $id)
+            ->map(fn ($id): string => (string) $id)
             ->all();
 
         $rentalPackage->items()

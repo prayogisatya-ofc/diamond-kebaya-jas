@@ -15,10 +15,10 @@ class RentalAvailabilityService
     private const BLOCKING_STATUSES = ['booked', 'picked_up', 'overdue'];
 
     /**
-     * @param  array<int, array{product_variant_id?: int|string|null, quantity?: int|string|null}>  $items
-     * @return array<int, array{variant_id: int, requested_quantity: int, stock_quantity: int, booked_quantity: int, available_quantity: int, is_available: bool, variant_name: string, product_name: string, first_item_index: int}>
+     * @param  array<int, array{product_variant_id?: string|null, quantity?: int|string|null}>  $items
+     * @return array<int, array{variant_id: string, requested_quantity: int, stock_quantity: int, booked_quantity: int, available_quantity: int, is_available: bool, variant_name: string, product_name: string, first_item_index: int}>
      */
-    public function checkItems(array $items, CarbonInterface|string $pickupAt, CarbonInterface|string $returnDueAt, ?int $ignoreRentalId = null, ?int $ignoreRentalItemId = null): array
+    public function checkItems(array $items, CarbonInterface|string $pickupAt, CarbonInterface|string $returnDueAt, ?string $ignoreRentalId = null, ?string $ignoreRentalItemId = null): array
     {
         $pickupAt = $this->dateTime($pickupAt);
         $returnDueAt = $this->dateTime($returnDueAt);
@@ -31,7 +31,7 @@ class RentalAvailabilityService
                 continue;
             }
 
-            $variantId = (int) $item['product_variant_id'];
+            $variantId = (string) $item['product_variant_id'];
             $requestedByVariant[$variantId] = ($requestedByVariant[$variantId] ?? 0) + (int) ($item['quantity'] ?? 0);
             $firstIndexByVariant[$variantId] ??= $index;
         }
@@ -47,7 +47,7 @@ class RentalAvailabilityService
             ->keyBy('id');
 
         return collect($requestedByVariant)
-            ->map(function (int $requestedQuantity, int $variantId) use ($firstIndexByVariant, $ignoreRentalId, $ignoreRentalItemId, $pickupAt, $returnDueAt, $variants): array {
+            ->map(function (int $requestedQuantity, string $variantId) use ($firstIndexByVariant, $ignoreRentalId, $ignoreRentalItemId, $pickupAt, $returnDueAt, $variants): array {
                 /** @var ProductVariant $variant */
                 $variant = $variants->get($variantId);
                 $bookedQuantity = $this->bookedQuantity($variantId, $pickupAt, $returnDueAt, $ignoreRentalId, $ignoreRentalItemId);
@@ -70,10 +70,10 @@ class RentalAvailabilityService
     }
 
     /**
-     * @param  array<int, array{product_variant_id?: int|string|null, quantity?: int|string|null}>  $items
-     * @return array<int, array{variant_id: int, requested_quantity: int, stock_quantity: int, booked_quantity: int, available_quantity: int, is_available: bool, variant_name: string, product_name: string, first_item_index: int}>
+     * @param  array<int, array{product_variant_id?: string|null, quantity?: int|string|null}>  $items
+     * @return array<int, array{variant_id: string, requested_quantity: int, stock_quantity: int, booked_quantity: int, available_quantity: int, is_available: bool, variant_name: string, product_name: string, first_item_index: int}>
      */
-    public function unavailableItems(array $items, CarbonInterface|string $pickupAt, CarbonInterface|string $returnDueAt, ?int $ignoreRentalId = null, ?int $ignoreRentalItemId = null): array
+    public function unavailableItems(array $items, CarbonInterface|string $pickupAt, CarbonInterface|string $returnDueAt, ?string $ignoreRentalId = null, ?string $ignoreRentalItemId = null): array
     {
         return collect($this->checkItems($items, $pickupAt, $returnDueAt, $ignoreRentalId, $ignoreRentalItemId))
             ->reject(fn (array $availability): bool => $availability['is_available'])
@@ -82,9 +82,9 @@ class RentalAvailabilityService
     }
 
     /**
-     * @return array{variant_id: int, stock_quantity: int, booked_quantity: int, available_quantity: int, variant_name: string, product_name: string}
+     * @return array{variant_id: string, stock_quantity: int, booked_quantity: int, available_quantity: int, variant_name: string, product_name: string}
      */
-    public function availabilityForVariant(ProductVariant $variant, CarbonInterface|string $pickupAt, CarbonInterface|string $returnDueAt, ?int $ignoreRentalId = null, ?int $ignoreRentalItemId = null): array
+    public function availabilityForVariant(ProductVariant $variant, CarbonInterface|string $pickupAt, CarbonInterface|string $returnDueAt, ?string $ignoreRentalId = null, ?string $ignoreRentalItemId = null): array
     {
         $pickupAt = $this->dateTime($pickupAt);
         $returnDueAt = $this->dateTime($returnDueAt);
@@ -102,7 +102,7 @@ class RentalAvailabilityService
         ];
     }
 
-    public function bookedQuantity(int $variantId, CarbonInterface|string $pickupAt, CarbonInterface|string $returnDueAt, ?int $ignoreRentalId = null, ?int $ignoreRentalItemId = null): int
+    public function bookedQuantity(string $variantId, CarbonInterface|string $pickupAt, CarbonInterface|string $returnDueAt, ?string $ignoreRentalId = null, ?string $ignoreRentalItemId = null): int
     {
         $pickupAt = $this->dateTime($pickupAt);
         $returnDueAt = $this->dateTime($returnDueAt);

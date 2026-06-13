@@ -21,7 +21,7 @@ class ProductController extends Controller
     {
         $filters = [
             'search' => $request->string('search')->trim()->toString(),
-            'category' => $request->integer('category') ?: null,
+            'category' => $request->string('category')->trim()->toString() ?: null,
         ];
 
         $products = Product::query()
@@ -34,7 +34,7 @@ class ProductController extends Controller
                         ->orWhere('code', 'like', "%{$filters['search']}%");
                 });
             })
-            ->when($filters['category'], fn ($query, int $categoryId) => $query->where('product_category_id', $categoryId))
+            ->when($filters['category'], fn ($query, string $categoryId) => $query->where('product_category_id', $categoryId))
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString()

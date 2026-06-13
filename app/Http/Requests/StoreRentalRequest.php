@@ -27,7 +27,7 @@ class StoreRentalRequest extends FormRequest
     {
         return [
             'customer_mode' => ['required', 'string', 'in:existing,new'],
-            'customer_id' => ['nullable', 'required_if:customer_mode,existing', 'integer', 'exists:customers,id'],
+            'customer_id' => ['nullable', 'required_if:customer_mode,existing', 'ulid', 'exists:customers,id'],
             'new_customer.name' => ['nullable', 'required_if:customer_mode,new', 'string', 'max:255'],
             'new_customer.whatsapp_number' => ['nullable', 'required_if:customer_mode,new', 'string', 'max:30'],
             'new_customer.notes' => ['nullable', 'string'],
@@ -40,9 +40,9 @@ class StoreRentalRequest extends FormRequest
             'initial_payment_method' => ['nullable', 'string', 'in:cash,transfer,qris,debit,other'],
             'initial_payment_notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.rental_package_id' => ['nullable', 'integer', 'exists:rental_packages,id'],
-            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
-            'items.*.product_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
+            'items.*.rental_package_id' => ['nullable', 'ulid', 'exists:rental_packages,id'],
+            'items.*.product_id' => ['required', 'ulid', 'exists:products,id'],
+            'items.*.product_variant_id' => ['nullable', 'ulid', 'exists:product_variants,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:4294967295'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],

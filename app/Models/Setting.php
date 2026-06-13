@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\SettingFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 class Setting extends Model
 {
     /** @use HasFactory<SettingFactory> */
-    use HasFactory;
+    use HasFactory, HasUlids;
 
     /**
      * @return array{store_name: string, store_address: string, store_whatsapp_number: string, invoice_footer_note: string, primary_color: string, store_logo_path: string|null, store_logo_url: string|null, store_favicon_path: string|null, store_favicon_url: string|null}
@@ -24,7 +25,7 @@ class Setting extends Model
             ->pluck('value', 'key');
 
         $profile = collect(self::storeDefaults())
-            ->map(fn (string|null $default, string $key): string|null => $settings->get($key) ?? $default)
+            ->map(fn (?string $default, string $key): ?string => $settings->get($key) ?? $default)
             ->all();
 
         $logoPath = $profile['store_logo_path'];

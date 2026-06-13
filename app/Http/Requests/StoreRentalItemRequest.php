@@ -26,9 +26,9 @@ class StoreRentalItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rental_package_id' => ['nullable', 'integer', 'exists:rental_packages,id'],
-            'product_id' => ['required', 'integer', 'exists:products,id'],
-            'product_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
+            'rental_package_id' => ['nullable', 'ulid', 'exists:rental_packages,id'],
+            'product_id' => ['required', 'ulid', 'exists:products,id'],
+            'product_variant_id' => ['nullable', 'ulid', 'exists:product_variants,id'],
             'quantity' => ['required', 'integer', 'min:1', 'max:4294967295'],
             'unit_price' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
             'discount_amount' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],

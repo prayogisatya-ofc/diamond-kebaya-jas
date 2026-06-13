@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\RentalPackageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class RentalPackage extends Model
 {
     /** @use HasFactory<RentalPackageFactory> */
-    use HasFactory;
+    use HasFactory, HasUlids;
 
     /**
      * @return HasMany<RentalPackageItem, $this>

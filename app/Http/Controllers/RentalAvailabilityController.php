@@ -12,10 +12,10 @@ class RentalAvailabilityController extends Controller
     public function __invoke(Request $request, RentalAvailabilityService $availabilityService): JsonResponse
     {
         $validated = $request->validate([
-            'product_variant_id' => ['required', 'integer', 'exists:product_variants,id'],
+            'product_variant_id' => ['required', 'ulid', 'exists:product_variants,id'],
             'pickup_at' => ['required', 'date'],
             'return_due_at' => ['required', 'date', 'after:pickup_at'],
-            'ignore_rental_id' => ['nullable', 'integer', 'exists:rentals,id'],
+            'ignore_rental_id' => ['nullable', 'ulid', 'exists:rentals,id'],
         ]);
 
         $variant = ProductVariant::query()->findOrFail($validated['product_variant_id']);

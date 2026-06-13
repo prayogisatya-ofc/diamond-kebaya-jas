@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('rental_whatsapp_notifications', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('rental_id')->constrained()->cascadeOnDelete();
+            $table->ulid('id')->primary();
+            $table->foreignUlid('rental_id')->constrained()->cascadeOnDelete();
             $table->string('type');
             $table->timestamp('scheduled_for');
             $table->timestamp('sent_at')->nullable();

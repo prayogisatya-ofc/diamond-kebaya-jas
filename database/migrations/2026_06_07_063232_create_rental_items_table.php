@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('rental_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('rental_id')->constrained()->cascadeOnUpdate()->cascadeOnDelete();
-            $table->foreignId('rental_package_id')->nullable()->constrained()->cascadeOnUpdate()->nullOnDelete();
-            $table->foreignId('product_id')->constrained()->cascadeOnUpdate()->restrictOnDelete();
-            $table->foreignId('product_variant_id')->nullable()->constrained()->cascadeOnUpdate()->restrictOnDelete();
+            $table->ulid('id')->primary();
+            $table->foreignUlid('rental_id')->constrained()->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignUlid('rental_package_id')->nullable()->constrained()->cascadeOnUpdate()->nullOnDelete();
+            $table->foreignUlid('product_id')->constrained()->cascadeOnUpdate()->restrictOnDelete();
+            $table->foreignUlid('product_variant_id')->nullable()->constrained()->cascadeOnUpdate()->restrictOnDelete();
             $table->string('item_name_snapshot');
             $table->string('variant_name_snapshot')->nullable();
             $table->unsignedInteger('quantity');
