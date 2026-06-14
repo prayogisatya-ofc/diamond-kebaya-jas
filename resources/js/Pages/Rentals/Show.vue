@@ -1,7 +1,7 @@
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
-import { ArrowLeft, CalendarClock, CheckCircle2, CreditCard, PackagePlus, Pencil, Plus, Printer, RotateCcw, Save, Search, ShoppingBag, Trash2, X, XCircle } from '@lucide/vue'
+import { ArrowLeft, CalendarClock, CheckCircle2, CreditCard, PackagePlus, Pencil, Plus, Printer, ReceiptText, RotateCcw, Save, Search, ShoppingBag, Trash2, X, XCircle } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Button from '@/Components/Button.vue'
 import Card from '@/Components/Card.vue'
@@ -388,6 +388,10 @@ async function deletePayment(payment) {
                 <Button :href="route('rentals.invoice', rental.id)" variant="accent">
                     <Printer :size="18" />
                     Print Nota
+                </Button>
+                <Button :href="route('rentals.thermal-receipt', rental.id)" variant="secondary">
+                    <ReceiptText :size="18" />
+                    Struk 58mm
                 </Button>
             </template>
         </PageHeader>

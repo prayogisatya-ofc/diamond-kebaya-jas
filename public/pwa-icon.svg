@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+    <title id="title">Diamond Kebaya &amp; Jas</title>
+    <rect width="512" height="512" rx="112" fill="#615cf9"/>
+    <path d="M256 82 415 206 256 430 97 206 256 82Z" fill="#fff"/>
+    <path d="M256 82 337 206 256 430 175 206 256 82Z" fill="#fff2e5"/>
+    <path d="M97 206h318M175 206l81-124 81 124M175 206l81 224 81-224" fill="none" stroke="#f2912c" stroke-linecap="round" stroke-linejoin="round" stroke-width="18"/>
+</svg>

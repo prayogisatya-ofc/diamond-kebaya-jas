@@ -85,3 +85,65 @@
         min-width: 0;
     }
 }
+
+@media (max-width: 639px) {
+    body {
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    main {
+        font-size: 0.8125rem;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+        font-size: 0.8125rem;
+    }
+
+    .text-xs {
+        font-size: 0.6875rem;
+        line-height: 1rem;
+    }
+
+    .text-sm {
+        font-size: 0.8125rem;
+        line-height: 1.25rem;
+    }
+
+    .text-base {
+        font-size: 0.875rem;
+        line-height: 1.35rem;
+    }
+
+    .text-lg {
+        font-size: 1rem;
+        line-height: 1.4rem;
+    }
+
+    .text-xl {
+        font-size: 1.125rem;
+        line-height: 1.55rem;
+    }
+
+    .text-2xl {
+        font-size: 1.25rem;
+        line-height: 1.7rem;
+    }
+
+    .text-3xl {
+        font-size: 1.5rem;
+        line-height: 1.9rem;
+    }
+
+    table {
+        font-size: 0.75rem;
+    }
+
+    th,
+    td {
+        padding: 0.625rem 0.75rem;
+    }
+}

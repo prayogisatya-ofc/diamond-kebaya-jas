@@ -1,0 +1,34 @@
+{
+    "name": "Diamond Kebaya & Jas",
+    "short_name": "Diamond Rental",
+    "description": "Rental Management POS untuk Diamond Kebaya & Jas.",
+    "start_url": "/dashboard",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#f2f1ff",
+    "theme_color": "#615cf9",
+    "categories": ["business", "productivity"],
+    "icons": [
+        {
+            "src": "/pwa-icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Buat Rental",
+            "short_name": "Rental",
+            "url": "/rentals/create",
+            "description": "Buat transaksi rental baru."
+        },
+        {
+            "name": "Data Produk",
+            "short_name": "Produk",
+            "url": "/products",
+            "description": "Buka master data produk."
+        }
+    ]
+}

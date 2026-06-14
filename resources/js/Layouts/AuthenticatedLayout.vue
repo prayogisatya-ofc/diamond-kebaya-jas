@@ -180,36 +180,36 @@ onBeforeUnmount(() => {
 
         <div v-if="drawerOpen" class="fixed inset-0 z-50 lg:hidden">
             <button class="absolute inset-0 bg-slate-950/35" type="button" aria-label="Tutup menu" @click="closeDrawer" />
-            <aside class="relative flex h-full w-[min(320px,86vw)] flex-col rounded-r-[2rem] bg-diamond-primary p-5 text-white">
-                <div class="flex items-center justify-between gap-4">
+            <aside class="relative flex h-full w-[min(300px,84vw)] flex-col rounded-r-[1.75rem] bg-diamond-primary p-4 text-white">
+                <div class="flex items-center justify-between gap-3">
                     <div>
-                        <p class="text-sm font-bold">Diamond Kebaya & Jas</p>
-                        <p class="text-xs text-white/70">Rental Management POS</p>
+                        <p class="text-xs font-bold">Diamond Kebaya & Jas</p>
+                        <p class="text-[11px] text-white/70">Rental Management POS</p>
                     </div>
-                    <button class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15" type="button" @click="closeDrawer">
-                        <X :size="22" />
+                    <button class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15" type="button" @click="closeDrawer">
+                        <X :size="20" />
                     </button>
                 </div>
 
-                <nav class="mt-8 grid gap-2">
+                <nav class="mt-6 grid gap-1.5">
                     <Link
                         v-for="item in navigation"
                         :key="item.route"
                         :href="route(item.route)"
-                        class="flex min-h-12 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition"
+                        class="flex min-h-10 items-center gap-2.5 rounded-2xl px-3 py-2 text-xs font-semibold transition"
                         :class="isActive(item) ? 'bg-white text-diamond-primary' : 'text-white/85 hover:bg-white/15'"
                         @click="closeDrawer"
                     >
-                        <component :is="item.icon" :size="20" />
+                        <component :is="item.icon" :size="18" />
                         {{ item.label }}
                     </Link>
                 </nav>
 
-                <div class="mt-auto rounded-3xl bg-white/12 p-4">
-                    <p class="text-sm font-semibold">{{ user.name }}</p>
-                    <p class="text-xs capitalize text-white/70">{{ user.role }}</p>
-                    <button class="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-semibold text-diamond-primary" type="button" @click="confirmLogout">
-                        <LogOut :size="18" />
+                <div class="mt-auto rounded-3xl bg-white/12 p-3">
+                    <p class="text-xs font-semibold">{{ user.name }}</p>
+                    <p class="text-[11px] capitalize text-white/70">{{ user.role }}</p>
+                    <button class="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-2xl bg-white text-xs font-semibold text-diamond-primary" type="button" @click="confirmLogout">
+                        <LogOut :size="16" />
                         Keluar
                     </button>
                 </div>
@@ -217,70 +217,70 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="min-w-0 overflow-x-hidden lg:pl-24">
-            <header class="sticky top-0 z-30 border-b border-diamond-border bg-white px-4 py-3 lg:hidden">
-                <div class="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-3">
-                    <button class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-diamond-primary" type="button" @click="drawerOpen = true">
-                        <Menu :size="22" />
+            <header class="sticky top-0 z-30 border-b border-diamond-border bg-white px-3 py-2 lg:hidden">
+                <div class="grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
+                    <button class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-diamond-primary" type="button" @click="drawerOpen = true">
+                        <Menu :size="20" />
                     </button>
-                    <Link :href="route('dashboard')" class="mx-auto flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white text-diamond-primary">
+                    <Link :href="route('dashboard')" class="mx-auto flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-white text-diamond-primary">
                         <img
                             v-if="store.logo_url"
                             :alt="store.name || 'Logo toko'"
-                            class="h-8 w-8 object-contain"
+                            class="h-7 w-7 object-contain"
                             :src="store.logo_url"
                         >
-                        <CalendarDays v-else :size="23" />
+                        <CalendarDays v-else :size="21" />
                     </Link>
                     <div ref="profileMenuRoot" class="relative flex justify-end">
                         <button
                             v-if="user"
-                            class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-diamond-text"
+                            class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-diamond-text"
                             type="button"
                             :aria-expanded="profileMenuOpen"
                             aria-haspopup="menu"
                             @click.stop="toggleProfileMenu"
                             @pointerdown.stop
                         >
-                            <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-diamond-primary text-xs font-bold text-white">
+                            <span class="flex h-7 w-7 items-center justify-center rounded-xl bg-diamond-primary text-[11px] font-bold text-white">
                                 {{ userInitials }}
                             </span>
                         </button>
 
                         <div
                             v-if="profileMenuOpen"
-                            class="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 overflow-hidden rounded-3xl border border-diamond-border bg-white"
+                            class="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-60 overflow-hidden rounded-3xl border border-diamond-border bg-white"
                             role="menu"
                             @pointerdown.stop
                         >
-                            <div class="border-b border-diamond-border p-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-diamond-primary text-sm font-bold text-white">
+                            <div class="border-b border-diamond-border p-3">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-diamond-primary text-xs font-bold text-white">
                                         {{ userInitials }}
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="truncate text-sm font-bold text-diamond-text">{{ user.name }}</p>
-                                        <p class="truncate text-xs capitalize text-diamond-muted">{{ user.role }}</p>
+                                        <p class="truncate text-xs font-bold text-diamond-text">{{ user.name }}</p>
+                                        <p class="truncate text-[11px] capitalize text-diamond-muted">{{ user.role }}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="grid gap-1 p-2">
+                            <div class="grid gap-1 p-1.5">
                                 <Link
                                     :href="route('profile.edit')"
-                                    class="flex min-h-11 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-diamond-text transition hover:bg-diamond-surface-soft"
+                                    class="flex min-h-10 items-center gap-2.5 rounded-2xl px-3 py-2 text-xs font-semibold text-diamond-text transition hover:bg-diamond-surface-soft"
                                     role="menuitem"
                                     @click="profileMenuOpen = false"
                                 >
-                                    <UserRound :size="18" />
+                                    <UserRound :size="16" />
                                     Profil
                                 </Link>
                                 <button
-                                    class="flex min-h-11 items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                                    class="flex min-h-10 items-center gap-2.5 rounded-2xl px-3 py-2 text-left text-xs font-semibold text-red-600 transition hover:bg-red-50"
                                     type="button"
                                     role="menuitem"
                                     @click="confirmLogout"
                                 >
-                                    <LogOut :size="18" />
+                                    <LogOut :size="16" />
                                     Logout
                                 </button>
                             </div>
@@ -289,7 +289,7 @@ onBeforeUnmount(() => {
                 </div>
             </header>
 
-            <main class="min-h-screen min-w-0 max-w-full overflow-x-hidden px-4 pb-7 pt-4 sm:px-6 lg:px-7 lg:pb-7 lg:pt-7 2xl:px-9 2xl:pb-9 2xl:pt-9">
+            <main class="min-h-screen min-w-0 max-w-full overflow-x-hidden px-3 pb-5 pt-3 sm:px-6 lg:px-7 lg:pb-7 lg:pt-7 2xl:px-9 2xl:pb-9 2xl:pt-9">
                 <slot />
             </main>
         </div>

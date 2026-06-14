@@ -74,10 +74,10 @@ function pageUrl(page) {
 <template>
     <nav
         v-if="shouldShow"
-        class="grid gap-4 rounded-[2rem] border border-white/80 bg-white p-4 sm:p-5 xl:grid-cols-[1fr_auto] xl:items-center"
+        class="grid gap-3 rounded-[1.35rem] border border-white/80 bg-white p-3 sm:gap-4 sm:rounded-[2rem] sm:p-5 xl:grid-cols-[1fr_auto] xl:items-center"
         aria-label="Pagination"
     >
-        <div class="min-w-0 text-sm leading-6 text-diamond-muted">
+        <div class="min-w-0 text-xs leading-5 text-diamond-muted sm:text-sm sm:leading-6">
             <p>
                 Menampilkan
                 <span class="font-bold text-diamond-text">{{ fromItem }}</span>
@@ -87,30 +87,30 @@ function pageUrl(page) {
                 <span class="font-bold text-diamond-text">{{ totalItems }}</span>
                 data
             </p>
-            <p class="text-xs font-semibold text-diamond-soft">Halaman {{ currentPage }} dari {{ lastPage }}</p>
+            <p class="text-[11px] font-semibold text-diamond-soft sm:text-xs">Halaman {{ currentPage }} dari {{ lastPage }}</p>
         </div>
 
-        <div class="grid gap-3">
-            <div class="grid grid-cols-2 gap-2 sm:hidden">
+        <div class="grid gap-2 sm:gap-3">
+            <div class="grid grid-cols-2 gap-1.5 sm:hidden">
                 <Link
                     :href="currentPage > 1 ? pageUrl(currentPage - 1) : '#'"
-                    class="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-bold transition"
+                    class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-2xl border px-3 text-xs font-bold transition"
                     :class="currentPage > 1 ? 'cursor-pointer border-diamond-border bg-white text-diamond-text hover:bg-diamond-surface-soft' : 'pointer-events-none border-diamond-border bg-diamond-surface-soft text-diamond-soft'"
                     preserve-scroll
                     preserve-state
                 >
-                    <ChevronLeft :size="17" />
+                    <ChevronLeft :size="15" />
                     Sebelumnya
                 </Link>
                 <Link
                     :href="currentPage < lastPage ? pageUrl(currentPage + 1) : '#'"
-                    class="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-bold transition"
+                    class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-2xl border px-3 text-xs font-bold transition"
                     :class="currentPage < lastPage ? 'cursor-pointer border-diamond-border bg-white text-diamond-text hover:bg-diamond-surface-soft' : 'pointer-events-none border-diamond-border bg-diamond-surface-soft text-diamond-soft'"
                     preserve-scroll
                     preserve-state
                 >
                     Berikutnya
-                    <ChevronRight :size="17" />
+                    <ChevronRight :size="15" />
                 </Link>
             </div>
 

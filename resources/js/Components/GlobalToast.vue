@@ -125,7 +125,7 @@ onBeforeUnmount(() => {
 
 <template>
     <Teleport to="body">
-        <div class="pointer-events-none fixed inset-x-0 top-4 z-[80] flex flex-col gap-3 px-4 sm:left-auto sm:right-5 sm:top-5 sm:w-[24rem] sm:px-0">
+        <div class="pointer-events-none fixed inset-x-0 top-3 z-[80] flex flex-col gap-2 px-3 sm:left-auto sm:right-5 sm:top-5 sm:w-[24rem] sm:gap-3 sm:px-0">
             <TransitionGroup
                 enter-active-class="transition duration-200 ease-out"
                 enter-from-class="translate-y-2 opacity-0 sm:translate-x-4 sm:translate-y-0"
@@ -137,22 +137,22 @@ onBeforeUnmount(() => {
                 <article
                     v-for="toast in toasts"
                     :key="toast.id"
-                    class="pointer-events-auto flex gap-3 rounded-3xl border bg-white p-4 text-diamond-text"
+                    class="pointer-events-auto flex gap-2.5 rounded-[1.35rem] border bg-white p-3 text-diamond-text sm:gap-3 sm:rounded-3xl sm:p-4"
                     :class="toneClasses[toast.type]?.border || toneClasses.info.border"
                 >
-                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" :class="toneClasses[toast.type]?.icon || toneClasses.info.icon">
-                        <component :is="icons[toast.type] || icons.info" :size="21" />
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl sm:h-11 sm:w-11" :class="toneClasses[toast.type]?.icon || toneClasses.info.icon">
+                        <component :is="icons[toast.type] || icons.info" :size="18" />
                     </div>
                     <div class="min-w-0 flex-1">
-                        <p class="text-sm font-bold">{{ toast.title }}</p>
-                        <p class="mt-1 text-sm leading-6 text-diamond-muted">{{ toast.message }}</p>
+                        <p class="text-xs font-bold sm:text-sm">{{ toast.title }}</p>
+                        <p class="mt-0.5 text-xs leading-5 text-diamond-muted sm:mt-1 sm:text-sm sm:leading-6">{{ toast.message }}</p>
                     </div>
                     <button
-                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-text"
+                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-text sm:h-9 sm:w-9"
                         type="button"
                         @click="removeToast(toast.id)"
                     >
-                        <X :size="18" />
+                        <X :size="16" />
                     </button>
                 </article>
             </TransitionGroup>

@@ -1,6 +1,7 @@
 import { createApp, h } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
 import { ZiggyVue } from 'ziggy-js';
+import { registerServiceWorker } from './registerServiceWorker'
 import '../css/app.css'
 
 createInertiaApp({
@@ -15,3 +16,5 @@ createInertiaApp({
             .mount(el)
     },
 })
+
+registerServiceWorker()

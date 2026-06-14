@@ -64,15 +64,15 @@ function updateValue(event) {
 </script>
 
 <template>
-    <label class="grid min-w-0 gap-2">
-        <span v-if="label" class="text-sm font-semibold text-diamond-text">{{ label }}</span>
-        <div class="flex min-h-12 min-w-0 overflow-hidden rounded-xl border border-diamond-border bg-white transition focus-within:border-diamond-primary focus-within:ring-4 focus-within:ring-diamond-primary/10">
-            <span class="flex shrink-0 items-center border-r border-diamond-border bg-diamond-surface-soft px-4 text-sm font-bold text-diamond-muted">
+    <label class="grid min-w-0 gap-1.5 sm:gap-2">
+        <span v-if="label" class="text-xs font-semibold text-diamond-text sm:text-sm">{{ label }}</span>
+        <div class="flex min-h-10 min-w-0 overflow-hidden rounded-xl border border-diamond-border bg-white transition focus-within:border-diamond-primary focus-within:ring-4 focus-within:ring-diamond-primary/10 sm:min-h-12">
+            <span class="flex shrink-0 items-center border-r border-diamond-border bg-diamond-surface-soft px-3 text-xs font-bold text-diamond-muted sm:px-4 sm:text-sm">
                 Rp
             </span>
             <input
                 v-bind="$attrs"
-                class="min-w-0 flex-1 bg-white px-4 py-3 text-sm font-semibold text-diamond-text outline-none placeholder:text-diamond-soft"
+                class="min-w-0 flex-1 bg-white px-3 py-2 text-xs font-semibold text-diamond-text outline-none placeholder:text-diamond-soft sm:px-4 sm:py-3 sm:text-sm"
                 inputmode="numeric"
                 min="0"
                 :placeholder="placeholder"
@@ -82,6 +82,6 @@ function updateValue(event) {
                 @input="updateValue"
             >
         </div>
-        <span v-if="error" class="text-sm text-diamond-danger">{{ error }}</span>
+        <span v-if="error" class="text-xs text-diamond-danger sm:text-sm">{{ error }}</span>
     </label>
 </template>

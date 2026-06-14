@@ -28,7 +28,7 @@ const props = defineProps({
 const component = computed(() => (props.href ? Link : 'button'))
 
 const classes = computed(() => [
-    'inline-flex min-h-11 min-w-0 max-w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 text-sm font-semibold transition focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60',
+    'inline-flex min-h-10 min-w-0 max-w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-11 sm:gap-2 sm:px-4 sm:py-3 sm:text-sm',
     props.full ? 'w-full' : 'w-full sm:w-auto',
     {
         primary: 'bg-diamond-primary text-white hover:bg-diamond-primary-dark focus:ring-diamond-primary/20',

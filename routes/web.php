@@ -9,11 +9,12 @@ use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RentalAvailabilityController;
 use App\Http\Controllers\RentalController;
-use App\Http\Controllers\RentalItemController;
 use App\Http\Controllers\RentalInvoiceController;
-use App\Http\Controllers\RentalPaymentController;
+use App\Http\Controllers\RentalItemController;
 use App\Http\Controllers\RentalPackageController;
+use App\Http\Controllers\RentalPaymentController;
 use App\Http\Controllers\RentalStatusController;
+use App\Http\Controllers\RentalThermalReceiptController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StoreSettingController;
 use App\Http\Controllers\UserManagementController;
@@ -50,6 +51,8 @@ Route::middleware('auth')->group(function (): void {
     Route::resource('rentals', RentalController::class)->only(['index', 'create', 'store', 'show']);
     Route::get('rentals/{rental}/invoice', RentalInvoiceController::class)
         ->name('rentals.invoice');
+    Route::get('rentals/{rental}/thermal-receipt', RentalThermalReceiptController::class)
+        ->name('rentals.thermal-receipt');
     Route::post('rentals/{rental}/items', [RentalItemController::class, 'store'])
         ->name('rentals.items.store');
     Route::put('rentals/{rental}/items/{rentalItem}', [RentalItemController::class, 'update'])

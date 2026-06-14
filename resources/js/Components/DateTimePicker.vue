@@ -190,55 +190,55 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div ref="pickerRoot" class="relative grid min-w-0 gap-2">
-        <span v-if="label" class="text-sm font-semibold text-diamond-text">{{ label }}</span>
+    <div ref="pickerRoot" class="relative grid min-w-0 gap-1.5 sm:gap-2">
+        <span v-if="label" class="text-xs font-semibold text-diamond-text sm:text-sm">{{ label }}</span>
 
         <button
-            class="flex min-h-12 w-full min-w-0 cursor-pointer items-center justify-between gap-3 rounded-xl border border-diamond-border bg-white px-4 py-3 text-left text-sm outline-none transition hover:bg-diamond-surface-soft focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10"
+            class="flex min-h-10 w-full min-w-0 cursor-pointer items-center justify-between gap-2.5 rounded-xl border border-diamond-border bg-white px-3 py-2 text-left text-xs outline-none transition hover:bg-diamond-surface-soft focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10 sm:min-h-12 sm:gap-3 sm:px-4 sm:py-3 sm:text-sm"
             type="button"
             @click="isOpen = !isOpen"
         >
-            <span class="flex min-w-0 items-center gap-3">
-                <CalendarDays :size="18" class="shrink-0 text-diamond-muted" />
+            <span class="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                <CalendarDays :size="16" class="shrink-0 text-diamond-muted sm:size-[18px]" />
                 <span class="truncate font-semibold" :class="displayValue ? 'text-diamond-text' : 'text-diamond-soft'">
                     {{ displayValue || placeholder }}
                 </span>
             </span>
-            <Clock :size="17" class="shrink-0 text-diamond-muted" />
+            <Clock :size="15" class="shrink-0 text-diamond-muted sm:size-[17px]" />
         </button>
 
-        <span v-if="error" class="text-sm text-diamond-danger">{{ error }}</span>
+        <span v-if="error" class="text-xs text-diamond-danger sm:text-sm">{{ error }}</span>
 
         <div
             v-if="isOpen"
-            class="absolute left-1/2 top-[calc(100%+0.5rem)] z-[80] grid w-[min(22.5rem,calc(100vw-2rem))] max-w-none -translate-x-1/2 gap-4 rounded-3xl border border-diamond-border bg-white p-4 sm:left-0 sm:w-[22.5rem] sm:translate-x-0"
+            class="absolute left-1/2 top-[calc(100%+0.5rem)] z-[80] grid w-[min(20rem,calc(100vw-1.5rem))] max-w-none -translate-x-1/2 gap-3 rounded-[1.35rem] border border-diamond-border bg-white p-3 sm:left-0 sm:w-[22.5rem] sm:translate-x-0 sm:gap-4 sm:rounded-3xl sm:p-4"
         >
-            <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center justify-between gap-2 sm:gap-3">
                 <button
-                    class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-2xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-primary"
+                    class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-2xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-primary sm:h-10 sm:w-10"
                     type="button"
                     @click="previousMonth"
                 >
-                    <ChevronLeft :size="18" />
+                    <ChevronLeft :size="16" />
                 </button>
-                <p class="text-sm font-bold text-diamond-text">{{ monthLabel }}</p>
+                <p class="text-xs font-bold text-diamond-text sm:text-sm">{{ monthLabel }}</p>
                 <button
-                    class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-2xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-primary"
+                    class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-2xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-primary sm:h-10 sm:w-10"
                     type="button"
                     @click="nextMonth"
                 >
-                    <ChevronRight :size="18" />
+                    <ChevronRight :size="16" />
                 </button>
             </div>
 
             <div class="grid grid-cols-7 gap-1 text-center">
-                <span v-for="weekday in weekdayLabels" :key="weekday" class="py-1 text-[11px] font-bold text-diamond-muted">
+                <span v-for="weekday in weekdayLabels" :key="weekday" class="py-0.5 text-[10px] font-bold text-diamond-muted sm:py-1 sm:text-[11px]">
                     {{ weekday }}
                 </span>
                 <span v-for="(date, index) in calendarDays" :key="date?.toISOString() || `empty-${index}`" class="aspect-square">
                     <button
                         v-if="date"
-                        class="flex h-full w-full cursor-pointer items-center justify-center rounded-2xl text-sm font-bold transition"
+                        class="flex h-full w-full cursor-pointer items-center justify-center rounded-xl text-xs font-bold transition sm:rounded-2xl sm:text-sm"
                         :class="[
                             isSelected(date)
                                 ? 'bg-diamond-primary text-white'
@@ -254,19 +254,19 @@ onBeforeUnmount(() => {
                 </span>
             </div>
 
-            <div class="grid gap-2">
-                <span class="text-sm font-semibold text-diamond-text">Jam</span>
+            <div class="grid gap-1.5 sm:gap-2">
+                <span class="text-xs font-semibold text-diamond-text sm:text-sm">Jam</span>
                 <div class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
                     <select
-                        class="min-h-12 w-full cursor-pointer rounded-xl border border-diamond-border bg-white px-4 py-3 text-center text-sm font-bold text-diamond-text outline-none transition focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10"
+                        class="min-h-10 w-full cursor-pointer rounded-xl border border-diamond-border bg-white px-3 py-2 text-center text-xs font-bold text-diamond-text outline-none transition focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10 sm:min-h-12 sm:px-4 sm:py-3 sm:text-sm"
                         :value="selectedHour"
                         @change="setHour"
                     >
                         <option v-for="hour in hourOptions" :key="hour" :value="hour">{{ hour }}</option>
                     </select>
-                    <span class="text-lg font-bold text-diamond-muted">:</span>
+                    <span class="text-base font-bold text-diamond-muted sm:text-lg">:</span>
                     <select
-                        class="min-h-12 w-full cursor-pointer rounded-xl border border-diamond-border bg-white px-4 py-3 text-center text-sm font-bold text-diamond-text outline-none transition focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10"
+                        class="min-h-10 w-full cursor-pointer rounded-xl border border-diamond-border bg-white px-3 py-2 text-center text-xs font-bold text-diamond-text outline-none transition focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10 sm:min-h-12 sm:px-4 sm:py-3 sm:text-sm"
                         :value="selectedMinute"
                         @change="setMinute"
                     >
@@ -276,7 +276,7 @@ onBeforeUnmount(() => {
             </div>
 
             <button
-                class="min-h-11 cursor-pointer rounded-2xl bg-diamond-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-diamond-primary/90"
+                class="min-h-10 cursor-pointer rounded-2xl bg-diamond-primary px-3 py-2 text-xs font-bold text-white transition hover:bg-diamond-primary/90 sm:min-h-11 sm:px-4 sm:text-sm"
                 type="button"
                 @click="isOpen = false"
             >
