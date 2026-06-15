@@ -37,7 +37,7 @@ class RentalThermalReceiptController extends Controller
     }
 
     /**
-     * @return array{name: string, address: string, whatsapp_number: string, footer_note: string}
+     * @return array{name: string, address: string, whatsapp_number: string, logo_url: string|null, footer_note: string, primary_color: string}
      */
     private function storePayload(): array
     {
@@ -47,7 +47,9 @@ class RentalThermalReceiptController extends Controller
             'name' => $profile['store_name'],
             'address' => $profile['store_address'],
             'whatsapp_number' => $profile['store_whatsapp_number'],
+            'logo_url' => $profile['store_logo_url'],
             'footer_note' => $profile['invoice_footer_note'],
+            'primary_color' => $profile['primary_color'],
         ];
     }
 
