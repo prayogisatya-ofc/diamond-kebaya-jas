@@ -1,10 +1,10 @@
-const CACHE_VERSION = 'diamond-pwa-v1'
+const CACHE_VERSION = 'diamond-pwa-v2'
 const STATIC_CACHE = `${CACHE_VERSION}-static`
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`
 
 const PRECACHE_URLS = [
     '/manifest.webmanifest',
-    '/pwa-icon.svg',
+    '/pwaicon.svg',
     '/favicon.ico',
 ]
 
@@ -52,7 +52,7 @@ function isStaticAsset(request, url) {
     return url.pathname.startsWith('/build/')
         || url.pathname.startsWith('/storage/')
         || url.pathname === '/manifest.webmanifest'
-        || url.pathname === '/pwa-icon.svg'
+        || url.pathname === '/pwaicon.svg'
         || request.destination === 'font'
         || request.destination === 'image'
         || request.destination === 'script'

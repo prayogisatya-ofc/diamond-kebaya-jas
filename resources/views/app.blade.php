@@ -12,12 +12,12 @@
 
         <title>{{ $storeProfile['store_name'] ?: config('app.name', 'Laravel') }}</title>
         <link rel="manifest" href="/manifest.webmanifest">
-        <link rel="apple-touch-icon" href="{{ $storeProfile['store_favicon_url'] ?: '/pwa-icon.svg' }}">
+        <link rel="apple-touch-icon" href="{{ $storeProfile['store_favicon_url'] ?: '/pwaicon.svg' }}">
         @if ($storeProfile['store_favicon_url'])
             <link rel="icon" type="image/png" sizes="64x64" href="{{ $storeProfile['store_favicon_url'] }}">
             <link rel="shortcut icon" href="{{ $storeProfile['store_favicon_url'] }}">
         @else
-            <link rel="icon" type="image/svg+xml" href="/pwa-icon.svg">
+            <link rel="icon" type="image/svg+xml" href="/pwaicon.svg">
         @endif
 
         <meta property="og:image" content="{{ asset('/og-image.jpg') }}">
