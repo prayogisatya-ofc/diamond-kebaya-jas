@@ -60,6 +60,23 @@ function paymentMethodLabel(value) {
     }[value] || value || '-'
 }
 
+const bluetoothPrinterTargets = [
+    {
+        service: 'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+        characteristic: 'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f',
+    },
+    {
+        service: '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+        characteristic: '49535343-8841-43f4-a8d4-ecbe34729bb3',
+    },
+    {
+        service: '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+        characteristic: '49535343-aca3-481c-91ec-d85e28a60318',
+    },
+]
+const bluetoothPrinterServices = [...new Set(bluetoothPrinterTargets.map((target) => target.service))]
+const serialBaudRates = [9600, 19200, 38400, 57600, 115200]
+
 function normalizePrinterText(value) {
     return String(value ?? '')
         .normalize('NFKD')
@@ -197,11 +214,77 @@ export function canUseSerialPrinter() {
     return typeof navigator !== 'undefined' && 'serial' in navigator
 }
 
-export async function printRentalThermalReceipt(payload, statusCallback = () => {}) {
-    if (!canUseSerialPrinter()) {
-        throw new Error('Browser ini belum mendukung Web Serial. Gunakan Chrome/Edge desktop, atau Chrome Android versi terbaru.')
+export function canUseBluetoothPrinter() {
+    return typeof navigator !== 'undefined' && 'bluetooth' in navigator
+}
+
+function delay(ms) {
+    return new Promise((resolve) => {
+        window.setTimeout(resolve, ms)
+    })
+}
+
+async function writeBluetoothReceipt(characteristic, receiptBytes) {
+    const chunkSize = 20
+
+    for (let offset = 0; offset < receiptBytes.length; offset += chunkSize) {
+        const chunk = receiptBytes.slice(offset, offset + chunkSize)
+
+        if (typeof characteristic.writeValueWithoutResponse === 'function') {
+            await characteristic.writeValueWithoutResponse(chunk)
+        } else if (typeof characteristic.writeValueWithResponse === 'function') {
+            await characteristic.writeValueWithResponse(chunk)
+        } else {
+            await characteristic.writeValue(chunk)
+        }
+
+        await delay(8)
+    }
+}
+
+async function findWritableBluetoothCharacteristic(server, statusCallback) {
+    let lastError = null
+
+    for (const target of bluetoothPrinterTargets) {
+        try {
+            statusCallback('Mencari channel printer BLE...')
+            const service = await server.getPrimaryService(target.service)
+            const characteristic = await service.getCharacteristic(target.characteristic)
+
+            return characteristic
+        } catch (error) {
+            lastError = error
+        }
     }
 
+    throw lastError || new Error('Channel Bluetooth printer tidak ditemukan.')
+}
+
+async function openSerialPort(port, statusCallback) {
+    let lastError = null
+
+    for (const baudRate of serialBaudRates) {
+        try {
+            statusCallback(`Membuka koneksi serial ${baudRate} bps...`)
+            await port.open({ baudRate })
+
+            return
+        } catch (error) {
+            lastError = error
+
+            if (port?.readable || port?.writable) {
+                await port.close().catch(() => {})
+            }
+        }
+    }
+
+    const error = new Error('Gagal membuka port serial. Pastikan printer tidak sedang dipakai aplikasi lain, pilih port Bluetooth serial Woya/RPP02N yang benar, lalu coba matikan-nyalakan printer atau pair ulang.')
+    error.cause = lastError
+
+    throw error
+}
+
+async function printRentalThermalReceiptViaSerial(payload, statusCallback) {
     let port = null
     let writer = null
 
@@ -209,8 +292,7 @@ export async function printRentalThermalReceipt(payload, statusCallback = () => 
         statusCallback('Pilih printer Woya yang sudah di-pair...')
         port = await navigator.serial.requestPort()
 
-        statusCallback('Membuka koneksi serial...')
-        await port.open({ baudRate: 9600 })
+        await openSerialPort(port, statusCallback)
 
         writer = port.writable.getWriter()
         statusCallback('Mengirim data struk...')
@@ -225,4 +307,52 @@ export async function printRentalThermalReceipt(payload, statusCallback = () => 
             await port.close().catch(() => {})
         }
     }
+}
+
+async function printRentalThermalReceiptViaBluetooth(payload, statusCallback) {
+    let device = null
+
+    try {
+        statusCallback('Pilih printer Woya/RPP02N dari daftar Bluetooth...')
+        device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: bluetoothPrinterServices,
+        })
+
+        statusCallback('Menghubungkan Bluetooth BLE...')
+        const server = await device.gatt.connect()
+        const characteristic = await findWritableBluetoothCharacteristic(server, statusCallback)
+
+        statusCallback('Mengirim data struk via Bluetooth...')
+        await writeBluetoothReceipt(characteristic, buildRentalEscPosReceipt(payload))
+        statusCallback('Struk berhasil dikirim ke printer.')
+    } finally {
+        if (device?.gatt?.connected) {
+            device.gatt.disconnect()
+        }
+    }
+}
+
+export async function printRentalThermalReceipt(payload, statusCallback = () => {}) {
+    if (canUseSerialPrinter()) {
+        try {
+            await printRentalThermalReceiptViaSerial(payload, statusCallback)
+
+            return
+        } catch (error) {
+            if (!canUseBluetoothPrinter() || error?.name === 'NotFoundError') {
+                throw error
+            }
+
+            statusCallback('Print serial gagal, mencoba Bluetooth BLE...')
+        }
+    }
+
+    if (canUseBluetoothPrinter()) {
+        await printRentalThermalReceiptViaBluetooth(payload, statusCallback)
+
+        return
+    }
+
+    throw new Error('Browser ini belum mendukung Web Serial atau Web Bluetooth. Gunakan Chrome desktop/Android dengan HTTPS atau localhost.')
 }
