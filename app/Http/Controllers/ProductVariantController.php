@@ -51,6 +51,14 @@ class ProductVariantController extends Controller
     {
         $product = $productVariant->product;
 
+        if ($productVariant->rentalItems()->exists() || $productVariant->rentalPackageItems()->exists()) {
+            $productVariant->update(['is_active' => false]);
+
+            return redirect()
+                ->route('products.show', $product)
+                ->with('warning', 'Varian sudah dipakai di rental atau paket, jadi tidak bisa dihapus. Varian sudah dinonaktifkan agar histori transaksi tetap aman.');
+        }
+
         $productVariant->delete();
 
         return redirect()->route('products.show', $product)->with('success', 'Varian produk berhasil dihapus.');

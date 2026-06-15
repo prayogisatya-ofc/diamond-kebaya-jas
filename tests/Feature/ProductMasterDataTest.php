@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
+use App\Models\RentalItem;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -233,6 +234,31 @@ class ProductMasterDataTest extends TestCase
         $this->assertModelMissing($product);
     }
 
+    public function test_product_used_by_rental_can_not_be_deleted_and_is_deactivated(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('products/kebaya.jpg', 'image-content');
+
+        $product = Product::factory()->create([
+            'image_path' => 'products/kebaya.jpg',
+            'is_active' => true,
+        ]);
+        RentalItem::factory()->create([
+            'product_id' => $product->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->delete(route('products.destroy', $product))
+            ->assertRedirect(route('products.index', absolute: false))
+            ->assertSessionHas('warning');
+
+        $product->refresh();
+
+        $this->assertFalse($product->is_active);
+        $this->assertModelExists($product);
+        Storage::disk('public')->assertExists('products/kebaya.jpg');
+    }
+
     public function test_product_prices_must_be_integers(): void
     {
         $category = ProductCategory::factory()->create();
@@ -306,5 +332,28 @@ class ProductMasterDataTest extends TestCase
             ->assertRedirect(route('products.show', $product, absolute: false));
 
         $this->assertModelMissing($variant);
+    }
+
+    public function test_product_variant_used_by_rental_can_not_be_deleted_and_is_deactivated(): void
+    {
+        $product = Product::factory()->create();
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'is_active' => true,
+        ]);
+        RentalItem::factory()->create([
+            'product_id' => $product->id,
+            'product_variant_id' => $variant->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->delete(route('product-variants.destroy', $variant))
+            ->assertRedirect(route('products.show', $product, absolute: false))
+            ->assertSessionHas('warning');
+
+        $variant->refresh();
+
+        $this->assertFalse($variant->is_active);
+        $this->assertModelExists($variant);
     }
 }

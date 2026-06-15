@@ -48,7 +48,7 @@ Route::middleware('auth')->group(function (): void {
     Route::resource('products', ProductController::class);
     Route::resource('rental-packages', RentalPackageController::class);
     Route::resource('customers', CustomerController::class);
-    Route::resource('rentals', RentalController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('rentals', RentalController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
     Route::get('rentals/{rental}/invoice', RentalInvoiceController::class)
         ->name('rentals.invoice');
     Route::get('rentals/{rental}/thermal-receipt', RentalThermalReceiptController::class)

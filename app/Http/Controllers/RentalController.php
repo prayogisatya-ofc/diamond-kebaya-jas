@@ -151,6 +151,19 @@ class RentalController extends Controller
         ]);
     }
 
+    public function destroy(Request $request, Rental $rental): RedirectResponse
+    {
+        abort_unless($request->user()?->isOwner(), 403);
+
+        $invoiceNumber = $rental->invoice_number;
+
+        $rental->delete();
+
+        return redirect()
+            ->route('rentals.index')
+            ->with('success', "Rental {$invoiceNumber} berhasil dihapus.");
+    }
+
     /**
      * @return array{name: string, address: string, whatsapp_number: string, logo_url: string|null, footer_note: string, primary_color: string}
      */
@@ -382,6 +395,7 @@ class RentalController extends Controller
                 'can_return' => in_array($rental->status, ['picked_up', 'overdue'], true),
                 'can_complete' => $rental->status === 'returned' && $rental->payment_status === 'paid' && (float) $rental->remaining_amount === 0.0,
                 'can_cancel' => $rental->status === 'booked',
+                'can_delete' => request()->user()?->isOwner() === true,
             ],
             'created_at' => $rental->created_at,
         ];

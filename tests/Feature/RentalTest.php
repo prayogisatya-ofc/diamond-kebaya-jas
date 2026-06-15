@@ -6,9 +6,11 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Rental;
+use App\Models\RentalItem;
 use App\Models\RentalPackage;
 use App\Models\RentalPackageItem;
 use App\Models\RentalPayment;
+use App\Models\RentalWhatsappNotification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -1606,6 +1608,51 @@ class RentalTest extends TestCase
             ->assertOk()
             ->assertSee('INV-20260607-8888')
             ->assertSee('"can_pick_up":true', false)
-            ->assertSee('"can_cancel":true', false);
+            ->assertSee('"can_cancel":true', false)
+            ->assertSee('"can_delete":true', false);
+    }
+
+    public function test_owner_can_delete_rental_for_data_cleanup(): void
+    {
+        $rental = Rental::factory()->create([
+            'created_by' => $this->user->id,
+            'invoice_number' => 'INV-DELETE-0001',
+        ]);
+        $item = RentalItem::factory()->create([
+            'rental_id' => $rental->id,
+        ]);
+        $payment = RentalPayment::factory()->create([
+            'rental_id' => $rental->id,
+            'created_by' => $this->user->id,
+        ]);
+        $notification = RentalWhatsappNotification::query()->create([
+            'rental_id' => $rental->id,
+            'type' => 'return_reminder_today',
+            'scheduled_for' => now(),
+        ]);
+
+        $this->actingAs($this->user)
+            ->delete(route('rentals.destroy', $rental))
+            ->assertRedirect(route('rentals.index', absolute: false))
+            ->assertSessionHas('success');
+
+        $this->assertModelMissing($rental);
+        $this->assertDatabaseMissing('rental_items', ['id' => $item->id]);
+        $this->assertDatabaseMissing('rental_payments', ['id' => $payment->id]);
+        $this->assertDatabaseMissing('rental_whatsapp_notifications', ['id' => $notification->id]);
+    }
+
+    public function test_staff_can_not_delete_rental(): void
+    {
+        $staff = User::factory()->staff()->create();
+        $rental = Rental::factory()->create([
+            'created_by' => $this->user->id,
+        ]);
+
+        $this->actingAs($staff)
+            ->delete(route('rentals.destroy', $rental))
+            ->assertForbidden();
+
+        $this->assertModelExists($rental);
     }
 }

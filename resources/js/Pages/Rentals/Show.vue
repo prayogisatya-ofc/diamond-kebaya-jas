@@ -1,5 +1,5 @@
 <script setup>
-import { Head, useForm } from '@inertiajs/vue3'
+import { Head, router, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import { ArrowLeft, CalendarClock, CheckCircle2, CreditCard, PackagePlus, Pencil, Plus, Printer, ReceiptText, RotateCcw, Save, Search, ShoppingBag, Trash2, X, XCircle } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
@@ -379,6 +379,23 @@ async function cancelRental() {
     })
 }
 
+async function destroyRental() {
+    const confirmed = await confirmAction({
+        title: 'Hapus rental?',
+        message: `Rental ${props.rental.invoice_number}, item, pembayaran, dan notifikasi terkait akan dihapus permanen. Aksi ini dipakai hanya untuk pembersihan data.`,
+        confirmLabel: 'Ya, hapus rental',
+        tone: 'danger',
+    })
+
+    if (!confirmed) {
+        return
+    }
+
+    router.delete(route('rentals.destroy', props.rental.id), {
+        preserveScroll: true,
+    })
+}
+
 async function deleteItem(item) {
     const confirmed = await confirmAction({
         title: 'Hapus item rental?',
@@ -460,6 +477,10 @@ async function printThermalReceipt() {
                 <Button variant="accent" :disabled="thermalPrintProcessing" @click="printThermalReceipt">
                     <Printer :size="18" />
                     {{ thermalPrintProcessing ? 'Mengirim...' : 'Print Struk' }}
+                </Button>
+                <Button v-if="rental.actions.can_delete" variant="danger" @click="destroyRental">
+                    <Trash2 :size="18" />
+                    Hapus rental
                 </Button>
             </template>
         </PageHeader>

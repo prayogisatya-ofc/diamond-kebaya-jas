@@ -124,6 +124,14 @@ class ProductController extends Controller
 
     public function destroy(Product $product): RedirectResponse
     {
+        if ($product->rentalItems()->exists() || $product->rentalPackageItems()->exists()) {
+            $product->update(['is_active' => false]);
+
+            return redirect()
+                ->route('products.index')
+                ->with('warning', 'Produk sudah dipakai di rental atau paket, jadi tidak bisa dihapus. Produk sudah dinonaktifkan agar histori transaksi tetap aman.');
+        }
+
         $imagePath = $product->image_path;
 
         $product->delete();
