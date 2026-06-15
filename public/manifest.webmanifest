@@ -1,13 +1,13 @@
 {
     "name": "Diamond Kebaya & Jas",
-    "short_name": "Diamond Rental",
+    "short_name": "Diamond App",
     "description": "Rental Management POS untuk Diamond Kebaya & Jas.",
     "start_url": "/dashboard",
     "scope": "/",
     "display": "standalone",
     "orientation": "portrait",
-    "background_color": "#f2f1ff",
-    "theme_color": "#615cf9",
+    "background_color": "#ffffff",
+    "theme_color": "#065E48",
     "categories": ["business", "productivity"],
     "icons": [
         {
