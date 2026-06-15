@@ -218,6 +218,16 @@ export function canUseBluetoothPrinter() {
     return typeof navigator !== 'undefined' && 'bluetooth' in navigator
 }
 
+function shouldPreferBluetoothPrinter() {
+    if (typeof navigator === 'undefined' || typeof window === 'undefined') {
+        return false
+    }
+
+    const userAgent = navigator.userAgent || ''
+
+    return /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent) || (navigator.maxTouchPoints > 1 && window.innerWidth <= 900)
+}
+
 function delay(ms) {
     return new Promise((resolve) => {
         window.setTimeout(resolve, ms)
@@ -334,6 +344,12 @@ async function printRentalThermalReceiptViaBluetooth(payload, statusCallback) {
 }
 
 export async function printRentalThermalReceipt(payload, statusCallback = () => {}) {
+    if (shouldPreferBluetoothPrinter() && canUseBluetoothPrinter()) {
+        await printRentalThermalReceiptViaBluetooth(payload, statusCallback)
+
+        return
+    }
+
     if (canUseSerialPrinter()) {
         try {
             await printRentalThermalReceiptViaSerial(payload, statusCallback)
