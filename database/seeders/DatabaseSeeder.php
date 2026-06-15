@@ -78,6 +78,7 @@ class DatabaseSeeder extends Seeder
             'store_whatsapp_number' => '081234567890',
             'invoice_footer_note' => 'Terima kasih sudah menyewa di Diamond Kebaya & Jas. Simpan nota ini sebagai bukti transaksi.',
             'primary_color' => '#615cf9',
+            'whatsapp_notifications_enabled' => true,
             'store_logo_path' => null,
             'store_favicon_path' => null,
         ]);

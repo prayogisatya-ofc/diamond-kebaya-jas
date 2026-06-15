@@ -1,7 +1,8 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3'
+import { computed, ref } from 'vue'
 
-defineProps({
+const props = defineProps({
     store: {
         type: Object,
         required: true,
@@ -18,6 +19,14 @@ defineProps({
         type: Array,
         required: true,
     },
+})
+
+const printStatus = ref('')
+const printError = ref('')
+const serialPrinting = ref(false)
+
+const serialAvailable = computed(() => {
+    return typeof navigator !== 'undefined' && 'serial' in navigator
 })
 
 function formatMoney(value) {
@@ -82,9 +91,179 @@ function paymentMethodLabel(value) {
     }[value] || value || '-'
 }
 
-function printReceipt() {
-    if (typeof window !== 'undefined') {
-        window.print()
+function normalizePrinterText(value) {
+    return String(value ?? '')
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\x20-\x7E\n\r]/g, '')
+}
+
+function padRight(value, width) {
+    const text = normalizePrinterText(value).slice(0, width)
+
+    return text.padEnd(width, ' ')
+}
+
+function line(left, right = '', width = 32) {
+    const leftText = normalizePrinterText(left)
+    const rightText = normalizePrinterText(right)
+    const availableLeftWidth = Math.max(1, width - rightText.length)
+
+    return `${padRight(leftText, availableLeftWidth)}${rightText}\n`
+}
+
+function wrapText(value, width = 32) {
+    const words = normalizePrinterText(value).split(/\s+/).filter(Boolean)
+    const lines = []
+    let currentLine = ''
+
+    words.forEach((word) => {
+        if ((currentLine.length + word.length + 1) > width) {
+            if (currentLine) {
+                lines.push(currentLine)
+            }
+
+            currentLine = word
+            return
+        }
+
+        currentLine = currentLine ? `${currentLine} ${word}` : word
+    })
+
+    if (currentLine) {
+        lines.push(currentLine)
+    }
+
+    return lines.length ? lines.join('\n') : ''
+}
+
+function centerText(value, width = 32) {
+    const text = normalizePrinterText(value).slice(0, width)
+    const padding = Math.max(0, Math.floor((width - text.length) / 2))
+
+    return `${' '.repeat(padding)}${text}\n`
+}
+
+function printerCenteredWrappedText(value, width = 32) {
+    return wrapText(value, width)
+        .split('\n')
+        .filter(Boolean)
+        .map((text) => `${text}\n`)
+        .join('')
+}
+
+function buildEscPosReceipt() {
+    const width = 32
+    const separator = `${'-'.repeat(width)}\n`
+    const feedAndCut = '\n\n\n\x1D\x56\x00'
+    let text = '\x1B\x40'
+
+    text += '\x1B\x61\x01'
+    text += printerCenteredWrappedText(props.store.name, width)
+    text += printerCenteredWrappedText(props.store.address, width)
+    text += printerCenteredWrappedText(`WA: ${props.store.whatsapp_number}`, width)
+    text += '\x1B\x61\x00'
+    text += separator
+    text += line('No', props.rental.invoice_number, width)
+    text += line('Tgl', formatDate(props.rental.created_at), width)
+    text += line('Kasir', props.rental.creator?.name || '-', width)
+    text += line('Customer', props.rental.customer?.name || '-', width)
+    text += line('WA', props.rental.customer?.whatsapp_number || '-', width)
+    text += line('Jaminan', props.rental.guarantee_type || 'Belum ada', width)
+    text += line('Ambil', formatDate(props.rental.pickup_at), width)
+    text += line('Kembali', formatDate(props.rental.return_due_at), width)
+    text += line('Status', `${statusLabel(props.rental.status)} / ${statusLabel(props.rental.payment_status)}`, width)
+    text += separator
+    text += centerText('ITEM RENTAL', width)
+
+    props.items.forEach((item) => {
+        const itemName = item.variant_name_snapshot
+            ? `${item.item_name_snapshot} (${item.variant_name_snapshot})`
+            : item.item_name_snapshot
+
+        text += `${wrapText(itemName, width)}\n`
+
+        text += line(`${item.quantity} x ${formatMoney(item.unit_price)}`, formatMoney(item.final_price), width)
+    })
+
+    if (!props.items.length) {
+        text += centerText('Belum ada item', width)
+    }
+
+    text += separator
+    text += line('Subtotal', formatMoney(props.rental.subtotal_amount), width)
+
+    if (Number(props.rental.custom_adjustment_amount || 0) !== 0) {
+        text += line('Adjustment', formatMoney(props.rental.custom_adjustment_amount), width)
+    }
+
+    if (Number(props.rental.penalty_amount || 0) > 0) {
+        text += line(`Denda ${Number(props.rental.penalty_days || 0)} hari`, formatMoney(props.rental.penalty_amount), width)
+    }
+
+    text += line('TOTAL', formatMoney(props.rental.total_amount), width)
+    text += line('Dibayar', formatMoney(props.rental.paid_amount), width)
+    text += line('Sisa', formatMoney(props.rental.remaining_amount), width)
+
+    if (props.payments.length) {
+        text += separator
+        text += centerText('PEMBAYARAN', width)
+
+        props.payments.forEach((payment) => {
+            text += line(
+                `${paymentTypeLabel(payment.payment_type)} ${paymentMethodLabel(payment.payment_method)}`,
+                formatMoney(payment.amount),
+                width,
+            )
+        })
+    }
+
+    text += separator
+    text += '\x1B\x61\x01'
+    text += printerCenteredWrappedText(props.store.footer_note, width)
+    text += printerCenteredWrappedText('Terima kasih', width)
+    text += feedAndCut
+
+    return new TextEncoder().encode(text)
+}
+
+async function printSerialReceipt() {
+    printError.value = ''
+    printStatus.value = ''
+
+    if (!serialAvailable.value) {
+        printError.value = 'Browser ini belum mendukung Web Serial. Gunakan Chrome/Edge desktop, atau Chrome Android versi terbaru.'
+        return
+    }
+
+    let port = null
+    let writer = null
+
+    try {
+        serialPrinting.value = true
+        printStatus.value = 'Pilih printer Woya yang sudah di-pair...'
+
+        port = await navigator.serial.requestPort()
+
+        printStatus.value = 'Membuka koneksi serial...'
+        await port.open({ baudRate: 9600 })
+
+        writer = port.writable.getWriter()
+        printStatus.value = 'Mengirim data struk...'
+        await writer.write(buildEscPosReceipt())
+        printStatus.value = 'Struk berhasil dikirim ke printer.'
+    } catch (error) {
+        printError.value = error?.message || 'Gagal print via serial Bluetooth.'
+    } finally {
+        if (writer) {
+            writer.releaseLock()
+        }
+
+        if (port?.readable || port?.writable) {
+            await port.close().catch(() => {})
+        }
+
+        serialPrinting.value = false
     }
 }
 </script>
@@ -98,14 +277,24 @@ function printReceipt() {
                 Kembali ke detail rental
             </Link>
             <button
-                class="min-h-10 rounded-xl bg-neutral-950 px-4 text-xs font-bold text-white"
+                class="min-h-10 rounded-xl bg-neutral-800 px-4 text-xs font-bold text-white disabled:opacity-60"
+                :disabled="serialPrinting"
                 type="button"
-                @click="printReceipt"
+                @click="printSerialReceipt"
             >
-                Print Struk Thermal 58mm
+                {{ serialPrinting ? 'Mengirim...' : 'Print Bluetooth Woya' }}
             </button>
             <p class="text-[11px] leading-4 text-neutral-500">
-                Pilih printer thermal Woya 58mm dari dialog print browser. Matikan header/footer browser jika tersedia.
+                Pastikan printer Woya sudah di-pair ke perangkat, lalu pilih printer dari dialog browser.
+            </p>
+            <p class="text-[11px] leading-4 text-neutral-500">
+                Support API: Web Serial {{ serialAvailable ? 'ada' : 'tidak ada' }}.
+            </p>
+            <p v-if="printStatus" class="rounded-xl bg-emerald-50 p-2 text-[11px] font-semibold leading-4 text-emerald-700">
+                {{ printStatus }}
+            </p>
+            <p v-if="printError" class="rounded-xl bg-red-50 p-2 text-[11px] font-semibold leading-4 text-red-700">
+                {{ printError }}
             </p>
         </div>
 

@@ -33,11 +33,18 @@ class FonnteWhatsappService
         return $this->sendRentalMessage($rental, $this->returnReminderMessage($rental, $type, $this->rentalDetailUrl($rental)));
     }
 
+    public function isEnabled(): bool
+    {
+        return Setting::whatsappNotificationsEnabled()
+            && config('services.fonnte.enabled')
+            && filled(config('services.fonnte.token'));
+    }
+
     private function sendRentalMessage(Rental $rental, string $message): bool
     {
         $token = config('services.fonnte.token');
 
-        if (! config('services.fonnte.enabled') || blank($token)) {
+        if (! $this->isEnabled()) {
             return false;
         }
 

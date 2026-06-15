@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Validator;
 
 class ReturnRentalRequest extends FormRequest
@@ -27,17 +27,8 @@ class ReturnRentalRequest extends FormRequest
         return [
             'returned_at' => ['required', 'date'],
             'penalty_amount' => ['nullable', 'numeric', 'min:0', 'max:999999999.99'],
-            'pay_penalty_now' => ['sometimes', 'boolean'],
-            'penalty_payment_method' => [
-                Rule::requiredIf(fn (): bool => $this->boolean('pay_penalty_now')),
-                'nullable',
-                Rule::in(['cash', 'transfer', 'qris', 'debit', 'other']),
-            ],
-            'penalty_paid_at' => [
-                Rule::requiredIf(fn (): bool => $this->boolean('pay_penalty_now')),
-                'nullable',
-                'date',
-            ],
+            'penalty_payment_method' => ['nullable', 'string', 'in:cash,transfer,qris,debit,other'],
+            'penalty_paid_at' => ['nullable', 'date'],
             'penalty_notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
@@ -51,11 +42,35 @@ class ReturnRentalRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
-                if ($this->boolean('pay_penalty_now') && (float) $this->input('penalty_amount', 0) <= 0) {
-                    $validator->errors()->add(
-                        'penalty_amount',
-                        'Nominal denda wajib lebih dari 0 jika denda langsung dibayar.'
-                    );
+                if ($validator->errors()->isNotEmpty()) {
+                    return;
+                }
+
+                $rental = $this->route('rental');
+
+                if (! in_array($rental?->status, ['picked_up', 'overdue'], true)) {
+                    return;
+                }
+
+                $returnedAt = Carbon::parse($this->input('returned_at'))->startOfDay();
+                $returnDueAt = $rental?->return_due_at?->copy()->startOfDay();
+                $isLate = $returnDueAt && $returnedAt->greaterThan($returnDueAt);
+                $penaltyAmount = (float) $this->input('penalty_amount', 0);
+
+                if ($isLate && $penaltyAmount <= 0) {
+                    $validator->errors()->add('penalty_amount', 'Nominal denda wajib diisi jika barang terlambat dikembalikan.');
+                }
+
+                if ($penaltyAmount <= 0) {
+                    return;
+                }
+
+                if (blank($this->input('penalty_payment_method'))) {
+                    $validator->errors()->add('penalty_payment_method', 'Metode pembayaran denda wajib diisi.');
+                }
+
+                if (blank($this->input('penalty_paid_at'))) {
+                    $validator->errors()->add('penalty_paid_at', 'Tanggal pembayaran denda wajib diisi.');
                 }
             },
         ];

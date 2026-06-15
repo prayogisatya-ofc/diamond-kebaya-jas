@@ -416,6 +416,9 @@ class RentalTest extends TestCase
             ->post(route('rentals.return', $rental), [
                 'returned_at' => '2026-06-13 10:00:00',
                 'penalty_amount' => 25000,
+                'penalty_payment_method' => 'cash',
+                'penalty_paid_at' => '2026-06-13 10:05:00',
+                'penalty_notes' => 'Denda manual dibayar.',
             ])
             ->assertRedirect(route('rentals.show', $rental, absolute: false));
 
@@ -424,20 +427,8 @@ class RentalTest extends TestCase
         $this->assertSame('returned', $rental->status);
         $this->assertSame(1, $rental->penalty_days);
         $this->assertSame('325000.00', $rental->total_amount);
-        $this->assertSame('25000.00', $rental->remaining_amount);
-        $this->assertSame('dp', $rental->payment_status);
-
-        $this->actingAs($this->user)
-            ->post(route('rentals.payments.store', $rental), [
-                'payment_type' => 'denda',
-                'payment_method' => 'cash',
-                'amount' => 25000,
-                'paid_at' => '2026-06-13 10:05:00',
-                'notes' => 'Denda manual dibayar.',
-            ])
-            ->assertRedirect(route('rentals.show', $rental, absolute: false));
-
-        $this->assertSame('paid', $rental->refresh()->payment_status);
+        $this->assertSame('0.00', $rental->remaining_amount);
+        $this->assertSame('paid', $rental->payment_status);
 
         $this->actingAs($this->user)
             ->post(route('rentals.complete', $rental))
@@ -1229,6 +1220,11 @@ class RentalTest extends TestCase
             'created_by' => $this->user->id,
             'status' => 'booked',
             'guarantee_type' => null,
+            'payment_status' => 'paid',
+            'subtotal_amount' => 300000,
+            'total_amount' => 300000,
+            'paid_amount' => 300000,
+            'remaining_amount' => 0,
         ]);
 
         $this->actingAs($this->user)
@@ -1243,6 +1239,47 @@ class RentalTest extends TestCase
         $this->assertSame('sim', $rental->guarantee_type);
         $this->assertNotNull($rental->picked_up_at);
         $this->assertSame($this->user->id, $rental->picked_up_by);
+    }
+
+    public function test_pick_up_records_required_pelunasan_when_rental_has_remaining_payment(): void
+    {
+        $rental = Rental::factory()->create([
+            'created_by' => $this->user->id,
+            'status' => 'booked',
+            'guarantee_type' => 'ktp',
+            'payment_status' => 'dp',
+            'subtotal_amount' => 500000,
+            'total_amount' => 500000,
+            'paid_amount' => 200000,
+            'remaining_amount' => 300000,
+        ]);
+        RentalPayment::factory()->create([
+            'rental_id' => $rental->id,
+            'payment_type' => 'dp',
+            'payment_method' => 'cash',
+            'amount' => 200000,
+            'paid_at' => '2026-06-09 10:00:00',
+            'created_by' => $this->user->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->post(route('rentals.pick-up', $rental), [
+                'payment_amount' => 300000,
+                'payment_method' => 'qris',
+                'paid_at' => '2026-06-10 10:00:00',
+                'payment_notes' => 'Pelunasan saat ambil.',
+            ])
+            ->assertRedirect(route('rentals.show', $rental, absolute: false));
+
+        $rental->refresh();
+        $payment = $rental->payments()->where('payment_type', 'pelunasan')->firstOrFail();
+
+        $this->assertSame('picked_up', $rental->status);
+        $this->assertSame('paid', $rental->payment_status);
+        $this->assertSame('500000.00', $rental->paid_amount);
+        $this->assertSame('0.00', $rental->remaining_amount);
+        $this->assertSame('qris', $payment->payment_method);
+        $this->assertSame('300000.00', $payment->amount);
     }
 
     public function test_return_on_time_stores_zero_penalty(): void
@@ -1284,7 +1321,70 @@ class RentalTest extends TestCase
         $this->assertSame('paid', $rental->payment_status);
     }
 
-    public function test_late_return_with_manual_penalty_changes_paid_rental_to_dp_when_unpaid(): void
+    public function test_penalty_days_are_calculated_by_calendar_date_only(): void
+    {
+        $sameDateRental = Rental::factory()->create([
+            'created_by' => $this->user->id,
+            'status' => 'picked_up',
+            'pickup_at' => '2026-06-14 10:00:00',
+            'return_due_at' => '2026-06-15 08:00:00',
+            'payment_status' => 'paid',
+            'subtotal_amount' => 300000,
+            'total_amount' => 300000,
+            'paid_amount' => 300000,
+            'remaining_amount' => 0,
+        ]);
+        RentalPayment::factory()->create([
+            'rental_id' => $sameDateRental->id,
+            'payment_type' => 'pelunasan',
+            'payment_method' => 'cash',
+            'amount' => 300000,
+            'paid_at' => '2026-06-14 10:00:00',
+            'created_by' => $this->user->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->post(route('rentals.return', $sameDateRental), [
+                'returned_at' => '2026-06-15 23:59:00',
+                'penalty_amount' => 0,
+            ])
+            ->assertRedirect(route('rentals.show', $sameDateRental, absolute: false));
+
+        $this->assertSame(0, $sameDateRental->refresh()->penalty_days);
+
+        $nextDateRental = Rental::factory()->create([
+            'created_by' => $this->user->id,
+            'status' => 'picked_up',
+            'pickup_at' => '2026-06-14 10:00:00',
+            'return_due_at' => '2026-06-15 23:00:00',
+            'payment_status' => 'paid',
+            'subtotal_amount' => 300000,
+            'total_amount' => 300000,
+            'paid_amount' => 300000,
+            'remaining_amount' => 0,
+        ]);
+        RentalPayment::factory()->create([
+            'rental_id' => $nextDateRental->id,
+            'payment_type' => 'pelunasan',
+            'payment_method' => 'cash',
+            'amount' => 300000,
+            'paid_at' => '2026-06-14 10:00:00',
+            'created_by' => $this->user->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->post(route('rentals.return', $nextDateRental), [
+                'returned_at' => '2026-06-16 01:00:00',
+                'penalty_amount' => 25000,
+                'penalty_payment_method' => 'cash',
+                'penalty_paid_at' => '2026-06-16 01:05:00',
+            ])
+            ->assertRedirect(route('rentals.show', $nextDateRental, absolute: false));
+
+        $this->assertSame(1, $nextDateRental->refresh()->penalty_days);
+    }
+
+    public function test_late_return_requires_manual_penalty_payment(): void
     {
         $rental = Rental::factory()->create([
             'created_by' => $this->user->id,
@@ -1311,18 +1411,55 @@ class RentalTest extends TestCase
                 'returned_at' => '2026-06-11 10:00:00',
                 'penalty_amount' => 25000,
             ])
+            ->assertSessionHasErrors(['penalty_payment_method', 'penalty_paid_at']);
+
+        $this->assertSame('picked_up', $rental->refresh()->status);
+        $this->assertSame(0, $rental->payments()->where('payment_type', 'denda')->count());
+    }
+
+    public function test_late_return_records_manual_penalty_payment_automatically(): void
+    {
+        $rental = Rental::factory()->create([
+            'created_by' => $this->user->id,
+            'status' => 'picked_up',
+            'pickup_at' => '2026-06-08 10:00:00',
+            'return_due_at' => '2026-06-10 17:00:00',
+            'payment_status' => 'paid',
+            'subtotal_amount' => 500000,
+            'total_amount' => 500000,
+            'paid_amount' => 500000,
+            'remaining_amount' => 0,
+        ]);
+        RentalPayment::factory()->create([
+            'rental_id' => $rental->id,
+            'payment_type' => 'pelunasan',
+            'payment_method' => 'transfer',
+            'amount' => 500000,
+            'paid_at' => '2026-06-08 10:00:00',
+            'created_by' => $this->user->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->post(route('rentals.return', $rental), [
+                'returned_at' => '2026-06-11 10:00:00',
+                'penalty_amount' => 25000,
+                'penalty_payment_method' => 'cash',
+                'penalty_paid_at' => '2026-06-11 10:05:00',
+                'penalty_notes' => 'Denda dibayar saat return.',
+            ])
             ->assertRedirect(route('rentals.show', $rental, absolute: false));
 
         $rental->refresh();
+        $penaltyPayment = $rental->payments()->where('payment_type', 'denda')->firstOrFail();
 
         $this->assertSame('returned', $rental->status);
         $this->assertSame(1, $rental->penalty_days);
         $this->assertSame('25000.00', $rental->penalty_amount);
         $this->assertSame('525000.00', $rental->total_amount);
-        $this->assertSame('500000.00', $rental->paid_amount);
-        $this->assertSame('25000.00', $rental->remaining_amount);
-        $this->assertSame('dp', $rental->payment_status);
-        $this->assertSame(0, $rental->payments()->where('payment_type', 'denda')->count());
+        $this->assertSame('525000.00', $rental->paid_amount);
+        $this->assertSame('0.00', $rental->remaining_amount);
+        $this->assertSame('paid', $rental->payment_status);
+        $this->assertSame('cash', $penaltyPayment->payment_method);
     }
 
     public function test_late_return_can_record_manual_penalty_payment_immediately(): void
@@ -1351,7 +1488,6 @@ class RentalTest extends TestCase
             ->post(route('rentals.return', $rental), [
                 'returned_at' => '2026-06-13 18:00:00',
                 'penalty_amount' => 75000,
-                'pay_penalty_now' => true,
                 'penalty_payment_method' => 'cash',
                 'penalty_paid_at' => '2026-06-13 18:05:00',
                 'penalty_notes' => 'Denda dibayar saat return.',
@@ -1362,7 +1498,7 @@ class RentalTest extends TestCase
         $penaltyPayment = $rental->payments()->where('payment_type', 'denda')->firstOrFail();
 
         $this->assertSame('returned', $rental->status);
-        $this->assertSame(4, $rental->penalty_days);
+        $this->assertSame(3, $rental->penalty_days);
         $this->assertSame('75000.00', $rental->penalty_amount);
         $this->assertSame('575000.00', $rental->total_amount);
         $this->assertSame('575000.00', $rental->paid_amount);

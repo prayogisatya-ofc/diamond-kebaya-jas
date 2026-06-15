@@ -701,17 +701,17 @@ function submit() {
                         </div>
 
                         <CurrencyInput v-model="form.custom_total_amount" :error="form.errors.custom_total_amount" label="Total final manual" :placeholder="String(subtotal)" />
-                        <CurrencyInput v-model="form.initial_payment_amount" :error="form.errors.initial_payment_amount" label="DP awal" />
+                        <CurrencyInput v-model="form.initial_payment_amount" :error="form.errors.initial_payment_amount" label="Pembayaran awal" />
 
                         <label class="grid gap-2">
-                            <span class="text-sm font-semibold text-diamond-text">Metode DP</span>
+                            <span class="text-sm font-semibold text-diamond-text">Metode pembayaran awal</span>
                             <select v-model="form.initial_payment_method" :class="fieldClasses()">
                                 <option v-for="method in paymentMethodOptions" :key="method.value" :value="method.value">{{ method.label }}</option>
                             </select>
                             <span v-if="form.errors.initial_payment_method" class="text-sm text-diamond-danger">{{ form.errors.initial_payment_method }}</span>
                         </label>
 
-                        <Input v-model="form.initial_payment_notes" label="Catatan DP" placeholder="Opsional" />
+                        <Input v-model="form.initial_payment_notes" label="Catatan pembayaran awal" placeholder="Opsional" />
 
                         <Button :disabled="form.processing" full type="submit">
                             <Save :size="18" />

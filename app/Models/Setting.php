@@ -16,7 +16,7 @@ class Setting extends Model
     use HasFactory, HasUlids;
 
     /**
-     * @return array{store_name: string, store_address: string, store_whatsapp_number: string, invoice_footer_note: string, primary_color: string, store_logo_path: string|null, store_logo_url: string|null, store_favicon_path: string|null, store_favicon_url: string|null}
+     * @return array{store_name: string, store_address: string, store_whatsapp_number: string, invoice_footer_note: string, primary_color: string, whatsapp_notifications_enabled: bool, store_logo_path: string|null, store_logo_url: string|null, store_favicon_path: string|null, store_favicon_url: string|null}
      */
     public static function storeProfile(): array
     {
@@ -25,7 +25,7 @@ class Setting extends Model
             ->pluck('value', 'key');
 
         $profile = collect(self::storeDefaults())
-            ->map(fn (?string $default, string $key): ?string => $settings->get($key) ?? $default)
+            ->map(fn (mixed $default, string $key): mixed => $settings->get($key) ?? $default)
             ->all();
 
         $logoPath = $profile['store_logo_path'];
@@ -37,6 +37,7 @@ class Setting extends Model
             'store_whatsapp_number' => $profile['store_whatsapp_number'] ?: 'WhatsApp toko belum diatur',
             'invoice_footer_note' => $profile['invoice_footer_note'] ?: 'Terima kasih sudah menyewa di Diamond Kebaya & Jas.',
             'primary_color' => $profile['primary_color'] ?: '#615cf9',
+            'whatsapp_notifications_enabled' => self::booleanValue($profile['whatsapp_notifications_enabled'] ?? true),
             'store_logo_path' => $logoPath,
             'store_logo_url' => $logoPath ? Storage::disk('public')->url($logoPath) : null,
             'store_favicon_path' => $faviconPath,
@@ -45,7 +46,7 @@ class Setting extends Model
     }
 
     /**
-     * @param  array<string, string|null>  $values
+     * @param  array<string, mixed>  $values
      */
     public static function updateStoreProfile(array $values): void
     {
@@ -53,14 +54,19 @@ class Setting extends Model
             self::query()->updateOrCreate([
                 'key' => $key,
             ], [
-                'value' => $value,
-                'type' => in_array($key, ['store_logo_path', 'store_favicon_path'], true) ? 'file' : 'string',
+                'value' => self::serializeValue($key, $value),
+                'type' => self::settingType($key),
             ]);
         }
     }
 
+    public static function whatsappNotificationsEnabled(): bool
+    {
+        return self::storeProfile()['whatsapp_notifications_enabled'];
+    }
+
     /**
-     * @return array<string, string|null>
+     * @return array<string, mixed>
      */
     public static function storeDefaults(): array
     {
@@ -72,6 +78,42 @@ class Setting extends Model
             'store_favicon_path' => null,
             'invoice_footer_note' => 'Terima kasih sudah menyewa di Diamond Kebaya & Jas.',
             'primary_color' => '#615cf9',
+            'whatsapp_notifications_enabled' => true,
         ];
+    }
+
+    private static function booleanValue(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    private static function serializeValue(string $key, mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($key === 'whatsapp_notifications_enabled') {
+            return self::booleanValue($value) ? '1' : '0';
+        }
+
+        return (string) $value;
+    }
+
+    private static function settingType(string $key): string
+    {
+        if (in_array($key, ['store_logo_path', 'store_favicon_path'], true)) {
+            return 'file';
+        }
+
+        if ($key === 'whatsapp_notifications_enabled') {
+            return 'boolean';
+        }
+
+        return 'string';
     }
 }

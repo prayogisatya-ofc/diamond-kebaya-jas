@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Rental;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -100,5 +101,62 @@ class WhatsAppNotificationTest extends TestCase
         $this->get($signedUrl)
             ->assertOk()
             ->assertSee($rental->invoice_number);
+    }
+
+    public function test_rental_creation_does_not_send_whatsapp_notification_when_store_setting_is_disabled(): void
+    {
+        $this->withoutVite();
+
+        config([
+            'services.fonnte.enabled' => true,
+            'services.fonnte.token' => 'test-fonnte-token',
+            'services.fonnte.base_url' => 'https://api.fonnte.com',
+            'services.fonnte.country_code' => '62',
+        ]);
+
+        Setting::updateStoreProfile([
+            'whatsapp_notifications_enabled' => false,
+        ]);
+
+        Http::fake([
+            'https://api.fonnte.com/send' => Http::response(['status' => true], 200),
+        ]);
+
+        $user = User::factory()->owner()->create();
+        $customer = Customer::factory()->create([
+            'whatsapp_number' => '0812-9999-8888',
+        ]);
+        $product = Product::factory()->create([
+            'base_rental_price' => 150000,
+        ]);
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'stock_quantity' => 2,
+            'rental_price' => 175000,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('rentals.store'), [
+                'customer_mode' => 'existing',
+                'customer_id' => $customer->id,
+                'guarantee_type' => null,
+                'pickup_at' => '2026-06-20 10:00:00',
+                'return_due_at' => '2026-06-22 17:00:00',
+                'custom_total_amount' => 300000,
+                'initial_payment_amount' => 100000,
+                'initial_payment_method' => 'cash',
+                'items' => [
+                    [
+                        'product_id' => $product->id,
+                        'product_variant_id' => $variant->id,
+                        'quantity' => 2,
+                        'unit_price' => 175000,
+                        'discount_amount' => 50000,
+                    ],
+                ],
+            ])
+            ->assertRedirect();
+
+        Http::assertNothingSent();
     }
 }

@@ -27,6 +27,19 @@ class RentalStatusController extends Controller
                 'picked_up_at' => now(),
                 'picked_up_by' => $request->user()->id,
             ]);
+
+            if ((float) $rental->remaining_amount > 0) {
+                $rental->payments()->create([
+                    'payment_type' => 'pelunasan',
+                    'payment_method' => $validated['payment_method'],
+                    'amount' => $validated['payment_amount'],
+                    'paid_at' => $validated['paid_at'],
+                    'notes' => $validated['payment_notes'] ?? 'Pelunasan saat barang diambil.',
+                    'created_by' => $request->user()->id,
+                ]);
+
+                $this->refreshPaymentTotals($rental);
+            }
         });
 
         return redirect()->route('rentals.show', $rental)->with('success', 'Barang berhasil ditandai diambil.');
@@ -52,7 +65,7 @@ class RentalStatusController extends Controller
                 'total_amount' => $this->totalAmountWithPenalty($rental, $penaltyAmount),
             ]);
 
-            if ($request->boolean('pay_penalty_now') && $penaltyAmount > 0) {
+            if ($penaltyAmount > 0) {
                 $rental->payments()->create([
                     'payment_type' => 'denda',
                     'payment_method' => $validated['penalty_payment_method'],
@@ -112,11 +125,14 @@ class RentalStatusController extends Controller
 
     private function penaltyDays(Rental $rental, Carbon $returnedAt): int
     {
-        if ($returnedAt->lessThanOrEqualTo($rental->return_due_at)) {
+        $returnDueDate = $rental->return_due_at->copy()->startOfDay();
+        $returnedDate = $returnedAt->copy()->startOfDay();
+
+        if ($returnedDate->lessThanOrEqualTo($returnDueDate)) {
             return 0;
         }
 
-        return (int) ceil($rental->return_due_at->diffInSeconds($returnedAt) / 86400);
+        return (int) $returnDueDate->diffInDays($returnedDate);
     }
 
     private function totalAmountWithPenalty(Rental $rental, float $penaltyAmount): float

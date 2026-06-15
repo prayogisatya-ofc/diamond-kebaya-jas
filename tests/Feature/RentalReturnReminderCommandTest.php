@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\Rental;
 use App\Models\RentalItem;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -124,6 +125,44 @@ class RentalReturnReminderCommandTest extends TestCase
             'rental_id' => $overdueRental->id,
             'type' => 'return_reminder_overdue',
             'scheduled_for' => '2026-06-14 00:00:00',
+        ]);
+    }
+
+    public function test_command_does_not_send_return_reminders_when_whatsapp_setting_is_disabled(): void
+    {
+        config([
+            'services.fonnte.enabled' => true,
+            'services.fonnte.token' => 'test-fonnte-token',
+            'services.fonnte.base_url' => 'https://api.fonnte.com',
+            'services.fonnte.country_code' => '62',
+        ]);
+
+        Setting::updateStoreProfile([
+            'whatsapp_notifications_enabled' => false,
+        ]);
+
+        Http::fake([
+            'https://api.fonnte.com/send' => Http::response(['status' => true], 200),
+        ]);
+
+        $user = User::factory()->owner()->create();
+        $customer = Customer::factory()->create([
+            'whatsapp_number' => '0812-9999-8888',
+        ]);
+        $rental = $this->pickedUpRental($customer, $user, 'INV-20260613-OFF', '2026-06-13 17:00:00');
+        RentalItem::factory()->create([
+            'rental_id' => $rental->id,
+            'item_name_snapshot' => 'Kebaya Merah',
+            'quantity' => 1,
+        ]);
+
+        $this->artisan('rentals:send-return-reminders', ['--date' => '2026-06-13'])
+            ->expectsOutput('Reminder pengembalian terkirim: 0')
+            ->assertSuccessful();
+
+        Http::assertNothingSent();
+        $this->assertDatabaseMissing('rental_whatsapp_notifications', [
+            'rental_id' => $rental->id,
         ]);
     }
 

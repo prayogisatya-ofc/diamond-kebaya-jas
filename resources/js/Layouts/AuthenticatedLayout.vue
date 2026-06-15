@@ -145,7 +145,7 @@ onBeforeUnmount(() => {
                     <img
                         v-if="store.logo_url"
                         :alt="store.name || 'Logo toko'"
-                        class="h-9 w-9 object-contain"
+                        class="h-12 w-12 object-contain"
                         :src="store.logo_url"
                     >
                     <CalendarDays v-else :size="24" />

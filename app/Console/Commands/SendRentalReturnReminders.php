@@ -20,6 +20,12 @@ class SendRentalReturnReminders extends Command
      */
     public function handle(FonnteWhatsappService $whatsappService): int
     {
+        if (! $whatsappService->isEnabled()) {
+            $this->info('Reminder pengembalian terkirim: 0');
+
+            return self::SUCCESS;
+        }
+
         $baseDate = $this->baseDate();
         $sentCount = 0;
 

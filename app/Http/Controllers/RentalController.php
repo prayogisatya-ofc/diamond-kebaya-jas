@@ -11,6 +11,7 @@ use App\Models\RentalItem;
 use App\Models\RentalPackage;
 use App\Models\RentalPackageItem;
 use App\Models\RentalPayment;
+use App\Models\Setting;
 use App\Services\FonnteWhatsappService;
 use App\Services\RentalAvailabilityService;
 use Carbon\CarbonInterface;
@@ -105,7 +106,7 @@ class RentalController extends Controller
 
             if ($paidAmount > 0) {
                 $rental->payments()->create([
-                    'payment_type' => 'dp',
+                    'payment_type' => $paidAmount >= $totalAmount ? 'pelunasan' : 'dp',
                     'payment_method' => $validated['initial_payment_method'],
                     'amount' => $paidAmount,
                     'paid_at' => now(),
@@ -146,7 +147,23 @@ class RentalController extends Controller
                 ->values()
                 ->map(fn (RentalPayment $payment): array => $this->paymentPayload($payment)),
             'products' => $this->productOptions($rental->pickup_at, $rental->return_due_at),
+            'store' => $this->storePayload(),
         ]);
+    }
+
+    /**
+     * @return array{name: string, address: string, whatsapp_number: string, footer_note: string}
+     */
+    private function storePayload(): array
+    {
+        $profile = Setting::storeProfile();
+
+        return [
+            'name' => $profile['store_name'],
+            'address' => $profile['store_address'],
+            'whatsapp_number' => $profile['store_whatsapp_number'],
+            'footer_note' => $profile['invoice_footer_note'],
+        ];
     }
 
     /**

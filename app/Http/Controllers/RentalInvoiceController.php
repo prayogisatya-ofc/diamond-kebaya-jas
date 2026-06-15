@@ -17,6 +17,8 @@ class RentalInvoiceController extends Controller
         $rental->load([
             'customer:id,name,whatsapp_number,notes',
             'creator:id,name',
+            'pickedUpBy:id,name',
+            'returnedBy:id,name',
             'items.rentalPackage:id,name',
             'payments.creator:id,name',
         ]);
@@ -39,7 +41,7 @@ class RentalInvoiceController extends Controller
     }
 
     /**
-     * @return array{name: string, address: string, whatsapp_number: string, logo_url: string|null, footer_note: string}
+     * @return array{name: string, address: string, whatsapp_number: string, logo_url: string|null, footer_note: string, primary_color: string}
      */
     private function storePayload(): array
     {
@@ -51,6 +53,7 @@ class RentalInvoiceController extends Controller
             'whatsapp_number' => $profile['store_whatsapp_number'],
             'logo_url' => $profile['store_logo_url'],
             'footer_note' => $profile['invoice_footer_note'],
+            'primary_color' => $profile['primary_color'],
         ];
     }
 
@@ -71,6 +74,8 @@ class RentalInvoiceController extends Controller
             'guarantee_type' => $rental->guarantee_type,
             'pickup_at' => $rental->pickup_at,
             'return_due_at' => $rental->return_due_at,
+            'picked_up_at' => $rental->picked_up_at,
+            'returned_at' => $rental->returned_at,
             'subtotal_amount' => $rental->subtotal_amount,
             'discount_amount' => $rental->discount_amount,
             'custom_adjustment_amount' => $rental->custom_adjustment_amount,
@@ -83,6 +88,12 @@ class RentalInvoiceController extends Controller
             'created_at' => $rental->created_at,
             'creator' => $rental->creator ? [
                 'name' => $rental->creator->name,
+            ] : null,
+            'picked_up_by' => $rental->pickedUpBy ? [
+                'name' => $rental->pickedUpBy->name,
+            ] : null,
+            'returned_by' => $rental->returnedBy ? [
+                'name' => $rental->returnedBy->name,
             ] : null,
         ];
     }

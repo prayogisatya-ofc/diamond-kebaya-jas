@@ -1,11 +1,12 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { Head, useForm } from '@inertiajs/vue3'
-import { ImagePlus, Palette, Save, Store, X } from '@lucide/vue'
+import { ImagePlus, MessageCircle, Palette, Save, Store, X } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Button from '@/Components/Button.vue'
 import Input from '@/Components/Input.vue'
 import PageHeader from '@/Components/PageHeader.vue'
+import Switch from '@/Components/Switch.vue'
 
 defineOptions({
     layout: AppLayout,
@@ -24,6 +25,7 @@ const form = useForm({
     store_whatsapp_number: props.settings.store_whatsapp_number,
     invoice_footer_note: props.settings.invoice_footer_note,
     primary_color: props.settings.primary_color || '#615cf9',
+    whatsapp_notifications_enabled: props.settings.whatsapp_notifications_enabled ?? true,
     logo: null,
 })
 
@@ -81,149 +83,177 @@ function submit() {
             title="Setting"
         />
 
-        <form class="grid max-w-5xl gap-6 rounded-[2rem] border border-white/80 bg-white p-6 sm:p-7" @submit.prevent="submit">
-            <section class="grid gap-5">
-                <div class="flex items-start gap-4">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-diamond-primary-soft text-diamond-primary">
-                        <Store :size="22" />
-                    </div>
-                    <div class="min-w-0">
-                        <h2 class="text-lg font-bold text-diamond-text">Profil toko</h2>
-                        <p class="mt-1 text-sm leading-6 text-diamond-muted">
-                            Pastikan nama, alamat, dan WhatsApp toko sesuai dengan informasi yang ingin tampil di invoice.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="grid gap-5 md:grid-cols-2">
-                    <Input
-                        v-model="form.store_name"
-                        :error="form.errors.store_name"
-                        autofocus
-                        label="Nama toko"
-                        placeholder="Diamond Kebaya & Jas"
-                    />
-
-                    <Input
-                        v-model="form.store_whatsapp_number"
-                        :error="form.errors.store_whatsapp_number"
-                        label="Nomor WhatsApp toko"
-                        placeholder="0812..."
-                    />
-                </div>
-
-                <label class="grid gap-2">
-                    <span class="text-sm font-semibold text-diamond-text">Alamat toko</span>
-                    <textarea
-                        v-model="form.store_address"
-                        class="min-h-32 rounded-xl border border-diamond-border bg-white px-4 py-3 text-sm leading-6 text-diamond-text outline-none transition placeholder:text-diamond-soft focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10"
-                        placeholder="Alamat lengkap toko"
-                    />
-                    <span v-if="form.errors.store_address" class="text-sm text-diamond-danger">{{ form.errors.store_address }}</span>
-                </label>
-
-                <label class="grid gap-2">
-                    <span class="text-sm font-semibold text-diamond-text">Catatan footer nota/invoice</span>
-                    <textarea
-                        v-model="form.invoice_footer_note"
-                        class="min-h-32 rounded-xl border border-diamond-border bg-white px-4 py-3 text-sm leading-6 text-diamond-text outline-none transition placeholder:text-diamond-soft focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10"
-                        placeholder="Contoh: Terima kasih sudah menyewa di Diamond Kebaya & Jas."
-                    />
-                    <span v-if="form.errors.invoice_footer_note" class="text-sm text-diamond-danger">{{ form.errors.invoice_footer_note }}</span>
-                </label>
-
-                <div class="grid gap-4 rounded-3xl bg-diamond-surface-soft p-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:p-5">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-diamond-primary">
-                        <Palette :size="22" />
-                    </div>
-                    <div class="grid gap-4">
-                        <div>
-                            <p class="text-sm font-bold text-diamond-text">Warna utama aplikasi</p>
+        <form class="grid gap-5" @submit.prevent="submit">
+            <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.86fr)] lg:items-start">
+                <section class="grid gap-5 rounded-[2rem] border border-white/80 bg-white p-5 sm:p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-diamond-primary-soft text-diamond-primary">
+                            <Store :size="22" />
+                        </div>
+                        <div class="min-w-0">
+                            <h2 class="text-lg font-bold text-diamond-text">Profil toko</h2>
                             <p class="mt-1 text-sm leading-6 text-diamond-muted">
-                                Warna ini dipakai global untuk sidebar, tombol utama, badge, link, dan aksen form.
+                                Pastikan nama, alamat, dan WhatsApp toko sesuai dengan informasi yang ingin tampil di invoice.
                             </p>
                         </div>
+                    </div>
 
-                        <div class="grid gap-3 sm:grid-cols-[5rem_minmax(0,14rem)_minmax(0,1fr)] sm:items-start">
-                            <label class="grid gap-2">
-                                <span class="text-sm font-semibold text-diamond-text">Pilih</span>
-                                <input
-                                    v-model="form.primary_color"
-                                    class="h-12 w-20 cursor-pointer rounded-xl border border-diamond-border bg-white p-1"
-                                    type="color"
-                                >
-                            </label>
+                    <div class="grid gap-5 md:grid-cols-2">
+                        <Input
+                            v-model="form.store_name"
+                            :error="form.errors.store_name"
+                            autofocus
+                            label="Nama toko"
+                            placeholder="Diamond Kebaya & Jas"
+                        />
 
-                            <Input
-                                v-model="form.primary_color"
-                                :error="form.errors.primary_color"
-                                label="Kode warna"
-                                maxlength="7"
-                                placeholder="#615cf9"
-                            />
+                        <Input
+                            v-model="form.store_whatsapp_number"
+                            :error="form.errors.store_whatsapp_number"
+                            label="Nomor WhatsApp toko"
+                            placeholder="0812..."
+                        />
+                    </div>
 
-                            <div class="grid gap-2">
-                                <span class="text-sm font-semibold text-diamond-text">Preview</span>
-                                <div class="flex min-h-12 items-center gap-3 rounded-xl border border-white bg-white px-4 py-3">
-                                    <span class="h-6 w-6 rounded-lg" :style="{ backgroundColor: form.primary_color }" />
-                                    <span class="text-sm font-semibold text-diamond-text">{{ form.primary_color }}</span>
+                    <label class="grid gap-2">
+                        <span class="text-sm font-semibold text-diamond-text">Alamat toko</span>
+                        <textarea
+                            v-model="form.store_address"
+                            class="min-h-32 rounded-xl border border-diamond-border bg-white px-4 py-3 text-sm leading-6 text-diamond-text outline-none transition placeholder:text-diamond-soft focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10"
+                            placeholder="Alamat lengkap toko"
+                        />
+                        <span v-if="form.errors.store_address" class="text-sm text-diamond-danger">{{ form.errors.store_address }}</span>
+                    </label>
+
+                    <label class="grid gap-2">
+                        <span class="text-sm font-semibold text-diamond-text">Catatan footer nota/invoice</span>
+                        <textarea
+                            v-model="form.invoice_footer_note"
+                            class="min-h-32 rounded-xl border border-diamond-border bg-white px-4 py-3 text-sm leading-6 text-diamond-text outline-none transition placeholder:text-diamond-soft focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10"
+                            placeholder="Contoh: Terima kasih sudah menyewa di Diamond Kebaya & Jas."
+                        />
+                        <span v-if="form.errors.invoice_footer_note" class="text-sm text-diamond-danger">{{ form.errors.invoice_footer_note }}</span>
+                    </label>
+
+                </section>
+
+                <div class="grid gap-5">
+                    <section class="grid gap-4 rounded-[2rem] border border-white/80 bg-white p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:p-6">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-diamond-primary-soft text-diamond-primary">
+                            <Palette :size="22" />
+                        </div>
+                        <div class="grid gap-4">
+                            <div>
+                                <p class="text-sm font-bold text-diamond-text">Warna utama aplikasi</p>
+                                <p class="mt-1 text-sm leading-6 text-diamond-muted">
+                                    Warna ini dipakai global untuk sidebar, tombol utama, badge, link, dan aksen form.
+                                </p>
+                            </div>
+
+                            <div class="grid gap-3">
+                                <div class="grid gap-3 sm:grid-cols-[5rem_minmax(0,1fr)] sm:items-start">
+                                    <label class="grid gap-2">
+                                        <span class="text-sm font-semibold text-diamond-text">Pilih</span>
+                                        <input
+                                            v-model="form.primary_color"
+                                            class="h-12 w-20 cursor-pointer rounded-xl border border-diamond-border bg-white p-1"
+                                            type="color"
+                                        >
+                                    </label>
+
+                                    <Input
+                                        v-model="form.primary_color"
+                                        :error="form.errors.primary_color"
+                                        label="Kode warna"
+                                        maxlength="7"
+                                        placeholder="#615cf9"
+                                    />
+                                </div>
+
+                                <div class="grid gap-2">
+                                    <span class="text-sm font-semibold text-diamond-text">Preview</span>
+                                    <div class="flex min-h-12 items-center gap-3 rounded-xl bg-diamond-surface-soft px-4 py-3">
+                                        <span class="h-6 w-6 rounded-lg" :style="{ backgroundColor: form.primary_color }" />
+                                        <span class="text-sm font-semibold text-diamond-text">{{ form.primary_color }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </section>
+
+                    <section class="grid gap-4 rounded-[2rem] border border-white/80 bg-white p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:p-6">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-diamond-primary-soft text-diamond-primary">
+                            <MessageCircle :size="22" />
+                        </div>
+                        <div class="grid gap-4">
+                            <div>
+                                <p class="text-sm font-bold text-diamond-text">Notifikasi WhatsApp</p>
+                                <p class="mt-1 text-sm leading-6 text-diamond-muted">
+                                    Jika dimatikan, sistem tidak mengirim notifikasi otomatis saat rental dibuat dan tidak mengirim reminder pengembalian atau keterlambatan.
+                                </p>
+                            </div>
+
+                            <Switch
+                                v-model="form.whatsapp_notifications_enabled"
+                                :error="form.errors.whatsapp_notifications_enabled"
+                                label="Aktifkan notifikasi WhatsApp"
+                                description=""
+                            />
+                        </div>
+                    </section>
+
+                    <section class="grid gap-4 rounded-[2rem] border border-white/80 bg-white p-5 sm:grid-cols-[150px_minmax(0,1fr)] sm:p-6 lg:grid-cols-1 xl:grid-cols-[150px_minmax(0,1fr)]">
+                        <div class="flex aspect-square items-center justify-center overflow-hidden rounded-3xl bg-diamond-surface-soft">
+                            <img
+                                v-if="displayLogoUrl"
+                                :src="displayLogoUrl"
+                                :alt="settings.store_name"
+                                class="h-full w-full object-contain p-3"
+                            >
+                            <div v-else class="grid place-items-center gap-2 text-center text-diamond-soft">
+                                <ImagePlus :size="34" />
+                                <span class="text-sm font-semibold">Belum ada logo</span>
+                            </div>
+                        </div>
+
+                        <div class="grid content-center gap-3">
+                            <div>
+                                <p class="text-sm font-bold text-diamond-text">Logo toko</p>
+                                <p class="mt-1 text-sm leading-6 text-diamond-muted">
+                                    Logo akan muncul di nota print jika sudah diupload. Gunakan JPG, PNG, atau WebP maksimal 2 MB.
+                                </p>
+                            </div>
+
+                            <div v-if="selectedLogoName" class="rounded-2xl bg-diamond-surface-soft px-4 py-3 text-sm font-semibold text-diamond-text">
+                                {{ selectedLogoName }}
+                            </div>
+
+                            <div class="flex flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
+                                <label class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-diamond-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-diamond-primary-dark sm:w-fit lg:w-full xl:w-fit">
+                                    <ImagePlus :size="18" />
+                                    Pilih logo
+                                    <input ref="logoInput" class="sr-only" accept="image/jpeg,image/png,image/webp" type="file" @change="updateLogo">
+                                </label>
+
+                                <button
+                                    v-if="form.logo"
+                                    class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-50 sm:w-fit lg:w-full xl:w-fit"
+                                    type="button"
+                                    @click="clearSelectedLogo"
+                                >
+                                    <X :size="17" />
+                                    Batal pilih
+                                </button>
+                            </div>
+
+                            <progress v-if="form.progress" class="h-2 w-full overflow-hidden rounded-full" max="100" :value="form.progress.percentage" />
+                            <span v-if="form.errors.logo" class="text-sm text-diamond-danger">{{ form.errors.logo }}</span>
+                        </div>
+                    </section>
                 </div>
-            </section>
+            </div>
 
-            <section class="grid gap-4 rounded-3xl bg-diamond-surface-soft p-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:p-5">
-                <div class="flex aspect-square items-center justify-center overflow-hidden rounded-3xl border border-white bg-white">
-                    <img
-                        v-if="displayLogoUrl"
-                        :src="displayLogoUrl"
-                        :alt="settings.store_name"
-                        class="h-full w-full object-contain p-3"
-                    >
-                    <div v-else class="grid place-items-center gap-2 text-center text-diamond-soft">
-                        <ImagePlus :size="34" />
-                        <span class="text-sm font-semibold">Belum ada logo</span>
-                    </div>
-                </div>
-
-                <div class="grid content-center gap-3">
-                    <div>
-                        <p class="text-sm font-bold text-diamond-text">Logo toko</p>
-                        <p class="mt-1 text-sm leading-6 text-diamond-muted">
-                            Logo akan muncul di nota print jika sudah diupload. Gunakan JPG, PNG, atau WebP maksimal 2 MB.
-                        </p>
-                    </div>
-
-                    <div v-if="selectedLogoName" class="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-diamond-text">
-                        {{ selectedLogoName }}
-                    </div>
-
-                    <div class="flex flex-col gap-2 sm:flex-row">
-                        <label class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-diamond-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-diamond-primary-dark sm:w-fit">
-                            <ImagePlus :size="18" />
-                            Pilih logo
-                            <input ref="logoInput" class="sr-only" accept="image/jpeg,image/png,image/webp" type="file" @change="updateLogo">
-                        </label>
-
-                        <button
-                            v-if="form.logo"
-                            class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-50 sm:w-fit"
-                            type="button"
-                            @click="clearSelectedLogo"
-                        >
-                            <X :size="17" />
-                            Batal pilih
-                        </button>
-                    </div>
-
-                    <progress v-if="form.progress" class="h-2 w-full overflow-hidden rounded-full" max="100" :value="form.progress.percentage" />
-                    <span v-if="form.errors.logo" class="text-sm text-diamond-danger">{{ form.errors.logo }}</span>
-                </div>
-            </section>
-
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div class="flex flex-col gap-3 rounded-[2rem] border border-white/80 bg-white p-5 sm:flex-row sm:items-center sm:p-6 lg:col-span-2">
                 <Button type="submit" :disabled="form.processing">
                     <Save :size="18" />
                     {{ form.processing ? 'Menyimpan...' : 'Simpan' }}

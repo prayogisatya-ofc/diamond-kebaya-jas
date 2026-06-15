@@ -20,6 +20,8 @@
             <link rel="icon" type="image/svg+xml" href="/pwa-icon.svg">
         @endif
 
+        <meta property="og:image" content="{{ asset('/og-image.jpg') }}">
+
         @fonts
 
         @routes

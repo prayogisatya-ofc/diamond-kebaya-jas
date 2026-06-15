@@ -723,7 +723,7 @@ function iconBoxClass(tone) {
 
                 <section class="mt-8">
                     <div class="flex items-center justify-between gap-3">
-                        <h2 class="text-base font-bold text-diamond-text">Kalender Jadwal</h2>
+                        <h2 class="text-base font-bold text-diamond-text">Kalender</h2>
                         <div class="flex items-center gap-1">
                             <button
                                 class="flex h-8 w-8 items-center justify-center rounded-xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-primary"
@@ -746,7 +746,6 @@ function iconBoxClass(tone) {
                     <div class="mt-4 rounded-3xl bg-diamond-surface-soft p-4">
                         <div class="flex items-center justify-between gap-2">
                             <p class="text-sm font-bold capitalize text-diamond-text">{{ monthLabel }}</p>
-                            <Badge tone="accent">Bulanan</Badge>
                         </div>
                         <div class="mt-4 grid grid-cols-7 gap-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-diamond-soft">
                             <span v-for="label in weekdayLabels" :key="label">{{ label }}</span>
@@ -782,7 +781,6 @@ function iconBoxClass(tone) {
                 <section class="mt-8">
                     <div class="flex items-center justify-between gap-3">
                         <h2 class="text-base font-bold text-diamond-text">Jadwal dekat</h2>
-                        <Badge tone="accent">Operasional</Badge>
                     </div>
                     <div class="mt-4 grid gap-3">
                         <template v-for="group in scheduleGroups" :key="group.title">
