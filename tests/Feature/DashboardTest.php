@@ -6,8 +6,8 @@ use App\Models\Customer;
 use App\Models\Rental;
 use App\Models\RentalPayment;
 use App\Models\User;
-use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase
@@ -23,7 +23,7 @@ class DashboardTest extends TestCase
 
     public function test_guests_are_redirected_to_login(): void
     {
-        $response = $this->get('/dashboard');
+        $response = $this->get(route('dashboard'));
 
         $response->assertRedirect(route('login', absolute: false));
     }
@@ -32,7 +32,7 @@ class DashboardTest extends TestCase
     {
         $user = User::factory()->owner()->create();
 
-        $response = $this->actingAs($user)->get('/dashboard');
+        $response = $this->actingAs($user)->get(route('dashboard'));
 
         $response->assertOk();
         $response->assertSee('Dashboard');
@@ -81,7 +81,7 @@ class DashboardTest extends TestCase
             'created_by' => $user->id,
         ]);
 
-        $response = $this->actingAs($user)->get('/dashboard');
+        $response = $this->actingAs($user)->get(route('dashboard'));
 
         $response->assertOk();
         $response->assertSee('INV-20260607-9001');

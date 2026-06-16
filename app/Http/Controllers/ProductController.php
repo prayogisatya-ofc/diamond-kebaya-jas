@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
+use App\Support\UploadedImageCompressor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,8 @@ use Inertia\Response;
 
 class ProductController extends Controller
 {
+    public function __construct(private readonly UploadedImageCompressor $imageCompressor) {}
+
     public function index(Request $request): Response
     {
         $filters = [
@@ -60,7 +63,7 @@ class ProductController extends Controller
             $validated = $this->productData($request->validated());
 
             if ($request->hasFile('image')) {
-                $validated['image_path'] = $request->file('image')->store('products', 'public');
+                $validated['image_path'] = $this->imageCompressor->store($request->file('image'), 'products');
             }
 
             return Product::query()->create([
@@ -101,7 +104,7 @@ class ProductController extends Controller
 
             if ($request->hasFile('image')) {
                 $imagePathToDelete = $product->image_path;
-                $validated['image_path'] = $request->file('image')->store('products', 'public');
+                $validated['image_path'] = $this->imageCompressor->store($request->file('image'), 'products');
             } elseif ($request->boolean('remove_image') && $product->image_path) {
                 $imagePathToDelete = $product->image_path;
                 $validated['image_path'] = null;
@@ -132,12 +135,17 @@ class ProductController extends Controller
                 ->with('warning', 'Produk sudah dipakai di rental atau paket, jadi tidak bisa dihapus. Produk sudah dinonaktifkan agar histori transaksi tetap aman.');
         }
 
-        $imagePath = $product->image_path;
+        $imagePaths = $product->variants()
+            ->whereNotNull('image_path')
+            ->pluck('image_path')
+            ->prepend($product->image_path)
+            ->filter()
+            ->values();
 
         $product->delete();
 
-        if ($imagePath) {
-            Storage::disk('public')->delete($imagePath);
+        if ($imagePaths->isNotEmpty()) {
+            Storage::disk('public')->delete($imagePaths->all());
         }
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus.');
@@ -183,7 +191,7 @@ class ProductController extends Controller
     }
 
     /**
-     * @return array{id: int, product_id: int, sku: string|null, name: string, size: string|null, color: string|null, stock_quantity: int, rental_price: string|null, is_active: bool}
+     * @return array{id: int, product_id: int, sku: string|null, name: string, size: string|null, color: string|null, image_path: string|null, image_url: string|null, stock_quantity: int, rental_price: string|null, is_active: bool}
      */
     private function variantPayload(ProductVariant $variant): array
     {
@@ -194,6 +202,8 @@ class ProductController extends Controller
             'name' => $variant->name,
             'size' => $variant->size,
             'color' => $variant->color,
+            'image_path' => $variant->image_path,
+            'image_url' => $variant->imageUrl(),
             'stock_quantity' => $variant->stock_quantity,
             'rental_price' => $variant->rental_price,
             'is_active' => $variant->is_active,

@@ -273,14 +273,14 @@ class RentalController extends Controller
     }
 
     /**
-     * @return array<int, array{id: int, name: string, code: string|null, image_url: string|null, base_rental_price: string, variants: array<int, array{id: int, name: string, sku: string|null, size: string|null, color: string|null, stock_quantity: int, rental_price: string|null, available_quantity: int|null}>}>
+     * @return array<int, array{id: int, name: string, code: string|null, image_url: string|null, base_rental_price: string, variants: array<int, array{id: int, name: string, sku: string|null, size: string|null, color: string|null, image_url: string|null, stock_quantity: int, rental_price: string|null, available_quantity: int|null}>}>
      */
     private function productOptions(CarbonInterface|string|null $pickupAt = null, CarbonInterface|string|null $returnDueAt = null, ?int $ignoreRentalId = null): array
     {
         $availabilityService = app(RentalAvailabilityService::class);
 
         return Product::query()
-            ->with('variants:id,product_id,name,sku,size,color,stock_quantity,rental_price')
+            ->with('variants:id,product_id,name,sku,size,color,image_path,stock_quantity,rental_price')
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'image_path', 'base_rental_price'])
@@ -300,6 +300,7 @@ class RentalController extends Controller
                             'sku' => $variant->sku,
                             'size' => $variant->size,
                             'color' => $variant->color,
+                            'image_url' => $variant->imageUrl(),
                             'stock_quantity' => $variant->stock_quantity,
                             'rental_price' => $variant->rental_price,
                             'available_quantity' => ($pickupAt && $returnDueAt)

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'diamond-pwa-v2'
+const CACHE_VERSION = 'diamond-pwa-v3'
 const STATIC_CACHE = `${CACHE_VERSION}-static`
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`
 

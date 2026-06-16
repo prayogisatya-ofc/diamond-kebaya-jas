@@ -21,17 +21,22 @@ const props = defineProps({
 })
 
 const form = useForm({
+    _method: 'put',
     sku: props.variant.sku || '',
     name: props.variant.name,
     size: props.variant.size || '',
     color: props.variant.color || '',
+    image: null,
+    remove_image: false,
     stock_quantity: props.variant.stock_quantity,
     rental_price: props.variant.rental_price || '',
     is_active: props.variant.is_active,
 })
 
 function submit() {
-    form.put(route('product-variants.update', props.variant.id))
+    form.post(route('product-variants.update', props.variant.id), {
+        forceFormData: true,
+    })
 }
 </script>
 
@@ -52,7 +57,7 @@ function submit() {
         </PageHeader>
 
         <div class="max-w-5xl">
-            <VariantForm :form="form" submit-label="Simpan perubahan" @submit="submit" />
+            <VariantForm :form="form" :existing-image-url="variant.image_url" submit-label="Simpan perubahan" @submit="submit" />
         </div>
     </section>
 </template>

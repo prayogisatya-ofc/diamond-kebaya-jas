@@ -28,6 +28,7 @@ class StoreProductVariantRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'size' => ['nullable', 'string', 'max:255'],
             'color' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'stock_quantity' => ['required', 'integer', 'min:0', 'max:4294967295'],
             'rental_price' => ['nullable', 'integer', 'min:0', 'max:9999999999'],
             'is_active' => ['sometimes', 'boolean'],

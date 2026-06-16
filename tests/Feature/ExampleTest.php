@@ -10,10 +10,10 @@ class ExampleTest extends TestCase
     /**
      * A basic test example.
      */
-    public function test_the_application_redirects_to_dashboard(): void
+    public function test_panel_root_redirects_to_panel_dashboard(): void
     {
-        $response = $this->get('/');
+        $response = $this->get('/panel');
 
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect('/panel/dashboard');
     }
 }

@@ -127,6 +127,16 @@ async function destroyVariant(variant) {
                     :href="route('product-variants.edit', variant.id)"
                     class="flex items-center gap-3 rounded-3xl border border-white/80 bg-white p-4 transition hover:bg-white/80"
                 >
+                    <div class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-diamond-surface-soft">
+                        <img
+                            v-if="variant.image_url"
+                            :src="variant.image_url"
+                            :alt="variant.name"
+                            class="h-full w-full object-cover"
+                        >
+                        <span v-else class="text-[10px] font-bold text-diamond-soft">Foto</span>
+                    </div>
+
                     <div class="min-w-0 flex-1">
                         <div class="flex items-start justify-between gap-3">
                             <p class="line-clamp-1 font-bold text-diamond-text">{{ variant.name }}</p>
@@ -149,6 +159,7 @@ async function destroyVariant(variant) {
                     <thead class="border-b border-diamond-border bg-diamond-surface-soft text-xs uppercase tracking-wide text-diamond-muted">
                         <tr>
                             <th class="px-6 py-4 font-bold">Varian</th>
+                            <th class="px-4 py-4 font-bold">Foto</th>
                             <th class="px-4 py-4 font-bold">SKU</th>
                             <th class="px-4 py-4 font-bold">Size</th>
                             <th class="px-4 py-4 font-bold">Warna</th>
@@ -161,6 +172,17 @@ async function destroyVariant(variant) {
                     <tbody class="divide-y divide-diamond-border">
                         <tr v-for="variant in variants" :key="variant.id" class="transition hover:bg-diamond-surface-soft">
                             <td class="px-6 py-4 font-bold text-diamond-text">{{ variant.name }}</td>
+                            <td class="px-4 py-4">
+                                <div class="flex size-14 items-center justify-center overflow-hidden rounded-2xl bg-diamond-surface-soft">
+                                    <img
+                                        v-if="variant.image_url"
+                                        :src="variant.image_url"
+                                        :alt="variant.name"
+                                        class="h-full w-full object-cover"
+                                    >
+                                    <span v-else class="text-[10px] font-bold text-diamond-soft">Foto</span>
+                                </div>
+                            </td>
                             <td class="px-4 py-4 text-diamond-muted">{{ variant.sku || '-' }}</td>
                             <td class="px-4 py-4 text-diamond-muted">{{ variant.size || '-' }}</td>
                             <td class="px-4 py-4 text-diamond-muted">{{ variant.color || '-' }}</td>
@@ -189,7 +211,7 @@ async function destroyVariant(variant) {
                             </td>
                         </tr>
                         <tr v-if="variants.length === 0">
-                            <td class="px-6 py-8" colspan="8">
+                            <td class="px-6 py-8" colspan="9">
                                 <EmptyState title="Belum ada varian produk." description="Tambahkan ukuran, warna, stok, dan harga khusus jika dibutuhkan." />
                             </td>
                         </tr>

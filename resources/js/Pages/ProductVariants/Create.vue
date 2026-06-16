@@ -21,13 +21,16 @@ const form = useForm({
     name: '',
     size: '',
     color: '',
+    image: null,
     stock_quantity: 0,
     rental_price: '',
     is_active: true,
 })
 
 function submit() {
-    form.post(route('products.variants.store', props.product.id))
+    form.post(route('products.variants.store', props.product.id), {
+        forceFormData: true,
+    })
 }
 </script>
 

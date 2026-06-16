@@ -334,6 +334,108 @@ class ProductMasterDataTest extends TestCase
         $this->assertModelMissing($variant);
     }
 
+    public function test_product_variant_image_is_uploaded_replaced_removed_and_deleted(): void
+    {
+        Storage::fake('public');
+
+        $product = Product::factory()->create();
+        $firstImage = UploadedFile::fake()->image('varian-awal.jpg', 2200, 1800);
+        $replacementImage = UploadedFile::fake()->image('varian-baru.png', 1800, 1400);
+
+        $this->actingAs($this->user)
+            ->post(route('products.variants.store', $product), [
+                'sku' => 'SKU-FOTO-M',
+                'name' => 'Size M Foto',
+                'size' => 'M',
+                'color' => 'Merah',
+                'image' => $firstImage,
+                'stock_quantity' => 3,
+                'rental_price' => 200000,
+                'is_active' => true,
+            ])
+            ->assertRedirect(route('products.show', $product, absolute: false));
+
+        $variant = ProductVariant::query()->where('sku', 'SKU-FOTO-M')->firstOrFail();
+        $firstImagePath = $variant->image_path;
+
+        $this->assertNotNull($firstImagePath);
+        Storage::disk('public')->assertExists($firstImagePath);
+
+        $this->actingAs($this->user)
+            ->post(route('product-variants.update', $variant), [
+                '_method' => 'put',
+                'sku' => 'SKU-FOTO-L',
+                'name' => 'Size L Foto',
+                'size' => 'L',
+                'color' => 'Merah',
+                'image' => $replacementImage,
+                'stock_quantity' => 5,
+                'rental_price' => 225000,
+                'is_active' => true,
+            ])
+            ->assertRedirect(route('products.show', $product, absolute: false));
+
+        $variant->refresh();
+        $replacementImagePath = $variant->image_path;
+
+        $this->assertNotNull($replacementImagePath);
+        $this->assertNotSame($firstImagePath, $replacementImagePath);
+        Storage::disk('public')->assertMissing($firstImagePath);
+        Storage::disk('public')->assertExists($replacementImagePath);
+
+        $this->actingAs($this->user)
+            ->post(route('product-variants.update', $variant), [
+                '_method' => 'put',
+                'sku' => 'SKU-FOTO-L',
+                'name' => 'Size L Foto',
+                'size' => 'L',
+                'color' => 'Merah',
+                'remove_image' => true,
+                'stock_quantity' => 5,
+                'rental_price' => 225000,
+                'is_active' => true,
+            ])
+            ->assertRedirect(route('products.show', $product, absolute: false));
+
+        $variant->refresh();
+
+        $this->assertNull($variant->image_path);
+        Storage::disk('public')->assertMissing($replacementImagePath);
+
+        Storage::disk('public')->put('product-variants/delete-me.jpg', 'image-content');
+        $variant->update(['image_path' => 'product-variants/delete-me.jpg']);
+
+        $this->actingAs($this->user)
+            ->delete(route('product-variants.destroy', $variant))
+            ->assertRedirect(route('products.show', $product, absolute: false));
+
+        Storage::disk('public')->assertMissing('product-variants/delete-me.jpg');
+        $this->assertModelMissing($variant);
+    }
+
+    public function test_product_delete_removes_variant_images(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('products/product.jpg', 'image-content');
+        Storage::disk('public')->put('product-variants/variant.jpg', 'image-content');
+
+        $product = Product::factory()->create([
+            'image_path' => 'products/product.jpg',
+        ]);
+        ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'image_path' => 'product-variants/variant.jpg',
+        ]);
+
+        $this->actingAs($this->user)
+            ->delete(route('products.destroy', $product))
+            ->assertRedirect(route('products.index', absolute: false));
+
+        Storage::disk('public')->assertMissing('products/product.jpg');
+        Storage::disk('public')->assertMissing('product-variants/variant.jpg');
+        $this->assertModelMissing($product);
+    }
+
     public function test_product_variant_used_by_rental_can_not_be_deleted_and_is_deactivated(): void
     {
         $product = Product::factory()->create();

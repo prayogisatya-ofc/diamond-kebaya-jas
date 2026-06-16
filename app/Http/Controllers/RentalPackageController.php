@@ -149,12 +149,12 @@ class RentalPackageController extends Controller
     }
 
     /**
-     * @return array<int, array{id: int, name: string, code: string|null, image_url: string|null, base_rental_price: string, variants: array<int, array{id: int, name: string, sku: string|null, size: string|null, color: string|null, rental_price: string|null}>}>
+     * @return array<int, array{id: int, name: string, code: string|null, image_url: string|null, base_rental_price: string, variants: array<int, array{id: int, name: string, sku: string|null, size: string|null, color: string|null, image_url: string|null, rental_price: string|null}>}>
      */
     private function productOptions(): array
     {
         return Product::query()
-            ->with('variants:id,product_id,name,sku,size,color,rental_price')
+            ->with('variants:id,product_id,name,sku,size,color,image_path,rental_price')
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'image_path', 'base_rental_price'])
             ->map(fn (Product $product): array => [
@@ -172,6 +172,7 @@ class RentalPackageController extends Controller
                         'sku' => $variant->sku,
                         'size' => $variant->size,
                         'color' => $variant->color,
+                        'image_url' => $variant->imageUrl(),
                         'rental_price' => $variant->rental_price,
                     ])
                     ->all(),

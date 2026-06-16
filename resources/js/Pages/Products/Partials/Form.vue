@@ -159,7 +159,7 @@ async function clearImage() {
                 <div class="grid content-center gap-3">
                     <div>
                         <p class="text-sm font-bold text-diamond-text">Foto produk</p>
-                        <p class="mt-1 text-sm leading-6 text-diamond-muted">Gunakan foto JPG, PNG, atau WebP maksimal 2 MB.</p>
+                        <p class="mt-1 text-sm leading-6 text-diamond-muted">Gunakan foto JPG, PNG, atau WebP. File kamera sampai 10 MB akan dikompres saat disimpan.</p>
                     </div>
 
                     <label class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-diamond-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-diamond-primary-dark sm:w-fit">

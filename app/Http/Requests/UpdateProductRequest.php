@@ -34,7 +34,7 @@ class UpdateProductRequest extends FormRequest
                 Rule::unique('products', 'code')->ignore($this->route('product')),
             ],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'remove_image' => ['sometimes', 'boolean'],
             'base_rental_price' => ['required', 'integer', 'min:0', 'max:9999999999'],
             'is_active' => ['sometimes', 'boolean'],

@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['product_id', 'sku', 'name', 'size', 'color', 'stock_quantity', 'rental_price', 'is_active'])]
+#[Fillable(['product_id', 'sku', 'name', 'size', 'color', 'image_path', 'stock_quantity', 'rental_price', 'is_active'])]
 class ProductVariant extends Model
 {
     /** @use HasFactory<ProductVariantFactory> */
@@ -38,6 +39,11 @@ class ProductVariant extends Model
     public function rentalItems(): HasMany
     {
         return $this->hasMany(RentalItem::class);
+    }
+
+    public function imageUrl(): ?string
+    {
+        return $this->image_path ? Storage::disk('public')->url($this->image_path) : null;
     }
 
     /**

@@ -17,6 +17,7 @@
         "@inertiajs/vite": "^3.3.1",
         "@inertiajs/vue3": "^3.3.1",
         "@lucide/vue": "^1.17.0",
+        "@tabler/icons-vue": "^3.44.0",
         "@vitejs/plugin-vue": "^6.0.7",
         "chart.js": "^4.5.1",
         "vue": "^3.5.35",
