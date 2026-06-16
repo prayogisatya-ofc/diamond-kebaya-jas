@@ -8,6 +8,13 @@ use Illuminate\Validation\Rule;
 
 class UpdateProductRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'base_rental_price' => $this->normalizeIntegerPrice($this->input('base_rental_price')),
+        ]);
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -39,5 +46,30 @@ class UpdateProductRequest extends FormRequest
             'base_rental_price' => ['required', 'integer', 'min:0', 'max:9999999999'],
             'is_active' => ['sometimes', 'boolean'],
         ];
+    }
+
+    private function normalizeIntegerPrice(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $trimmed = trim($value);
+
+        if ($trimmed === '') {
+            return $trimmed;
+        }
+
+        if (preg_match('/^\d+\.(\d{1,2})$/', $trimmed, $matches) === 1) {
+            return $matches[1] === '00'
+                ? explode('.', $trimmed)[0]
+                : $trimmed;
+        }
+
+        if (preg_match('/^\d{1,3}(\.\d{3})+$/', $trimmed) === 1) {
+            return str_replace('.', '', $trimmed);
+        }
+
+        return $trimmed;
     }
 }

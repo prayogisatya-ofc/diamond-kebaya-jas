@@ -179,6 +179,28 @@ class ProductMasterDataTest extends TestCase
         $this->assertSame('Siger Sunda', $product->name);
     }
 
+    public function test_product_update_accepts_unchanged_decimal_zero_price_string(): void
+    {
+        $product = Product::factory()->create([
+            'base_rental_price' => 175000,
+        ]);
+
+        $this->actingAs($this->user)
+            ->put(route('products.update', $product), [
+                'product_category_id' => $product->product_category_id,
+                'name' => $product->name,
+                'code' => $product->code,
+                'description' => $product->description,
+                'base_rental_price' => '175000.00',
+                'is_active' => true,
+            ])
+            ->assertRedirect(route('products.show', $product, absolute: false));
+
+        $product->refresh();
+
+        $this->assertSame('175000.00', $product->base_rental_price);
+    }
+
     public function test_product_image_is_uploaded_replaced_and_deleted_with_product(): void
     {
         Storage::fake('public');
@@ -411,6 +433,31 @@ class ProductMasterDataTest extends TestCase
 
         Storage::disk('public')->assertMissing('product-variants/delete-me.jpg');
         $this->assertModelMissing($variant);
+    }
+
+    public function test_product_variant_update_accepts_unchanged_decimal_zero_price_string(): void
+    {
+        $product = Product::factory()->create();
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'rental_price' => 225000,
+        ]);
+
+        $this->actingAs($this->user)
+            ->put(route('product-variants.update', $variant), [
+                'sku' => $variant->sku,
+                'name' => $variant->name,
+                'size' => $variant->size,
+                'color' => $variant->color,
+                'stock_quantity' => $variant->stock_quantity,
+                'rental_price' => '225000.00',
+                'is_active' => true,
+            ])
+            ->assertRedirect(route('products.show', $product, absolute: false));
+
+        $variant->refresh();
+
+        $this->assertSame('225000.00', $variant->rental_price);
     }
 
     public function test_product_delete_removes_variant_images(): void
