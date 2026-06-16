@@ -261,16 +261,16 @@ function changeImage(url) {
                         v-for="relatedProduct in relatedProducts"
                         :key="relatedProduct.id"
                         :href="route('public.catalog.show', relatedProduct.id)"
-                        class="group rounded-[20px] border border-slate-100 bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
+                        class="group rounded-[20px] border border-slate-100 bg-white shadow-sm transition-shadow hover:shadow-md"
                     >
-                        <div class="relative block aspect-[3/4] w-full overflow-hidden rounded-[14px] bg-slate-100">
+                        <div class="relative block aspect-[1/1] w-full overflow-hidden rounded-t-[20px] bg-slate-100">
                             <img
                                 :src="productImage(relatedProduct)"
                                 :alt="relatedProduct.name"
                                 class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                             >
                         </div>
-                        <div class="mt-4 px-1 pb-1">
+                        <div class="p-3">
                             <h3 class="truncate text-[15px] font-bold text-slate-800 transition group-hover:text-[var(--catalog-primary)]">{{ relatedProduct.name }}</h3>
                             <p class="mt-2 text-[15px] font-extrabold text-[var(--catalog-primary)]">{{ formatMoney(relatedProduct.lowest_price) }}</p>
                         </div>
