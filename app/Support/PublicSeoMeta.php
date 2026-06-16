@@ -14,7 +14,7 @@ class PublicSeoMeta
      */
     public static function forRequest(Request $request, array $storeProfile): array
     {
-        $defaultImage = self::absoluteUrl($request, $storeProfile['store_logo_url'] ?: asset('/og-image.jpg'));
+        $defaultImage = self::absoluteUrl($request, asset('/og-image.jpg'));
         $siteName = $storeProfile['store_name'] ?: 'Diamond Kebaya & Jas';
 
         if ($request->routeIs('dashboard', 'login', 'login.store', 'logout', 'profile.*', 'reports.*', 'products.*', 'product-categories.*', 'product-variants.*', 'rental-packages.*', 'customers.*', 'rentals.*', 'rental-availability', 'settings.*', 'users.*')) {

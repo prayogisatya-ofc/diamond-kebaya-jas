@@ -50,7 +50,7 @@ class PublicCatalogController extends Controller
 
         $products = Inertia::scroll(
             $productsQuery
-                ->paginate(12)
+                ->paginate(10)
                 ->withQueryString()
                 ->through(fn (Product $product): array => $this->productPayload($product, 6))
         );
