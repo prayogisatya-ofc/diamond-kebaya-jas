@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
+use App\Models\RentalPackage;
+use App\Models\RentalPackageItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
@@ -45,6 +47,7 @@ class PublicCatalogTest extends TestCase
                 ->component('Public/Catalog', false)
                 ->where('products.data.0.name', 'Kebaya Merah Modern')
                 ->where('products.data.0.variants.0.name', 'Size M Merah')
+                ->has('packages')
                 ->where('categories.0.name', 'Kebaya')
                 ->has('catalogStore.name')
             );
@@ -200,6 +203,61 @@ class PublicCatalogTest extends TestCase
             );
     }
 
+    public function test_public_catalog_shows_active_packages_and_package_detail(): void
+    {
+        $category = ProductCategory::factory()->create([
+            'name' => 'Jas',
+            'is_active' => true,
+        ]);
+        $product = Product::factory()->create([
+            'product_category_id' => $category->id,
+            'name' => 'Jas Hitam',
+            'is_active' => true,
+        ]);
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'name' => 'Size L',
+            'is_active' => true,
+        ]);
+        $package = RentalPackage::factory()->create([
+            'name' => 'Paket Jas Lengkap',
+            'package_price' => 350000,
+            'is_active' => true,
+        ]);
+        RentalPackageItem::factory()->create([
+            'rental_package_id' => $package->id,
+            'product_id' => $product->id,
+            'product_variant_id' => $variant->id,
+            'quantity' => 1,
+        ]);
+        RentalPackage::factory()->create([
+            'name' => 'Paket Nonaktif',
+            'is_active' => false,
+        ]);
+
+        $this->get(route('public.catalog', [
+            'search' => 'Jas Lengkap',
+        ]))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('packages.0.name', 'Paket Jas Lengkap')
+                ->where('packages.0.package_price', '350000.00')
+                ->where('packages.0.items_count', 1)
+                ->where('packages.0.preview_items.0.name', 'Jas Hitam')
+                ->has('packages', 1)
+            );
+
+        $this->get(route('public.catalog.packages.show', $package))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Public/PackageShow', false)
+                ->where('rentalPackage.name', 'Paket Jas Lengkap')
+                ->where('items.0.name', 'Jas Hitam')
+                ->where('items.0.product_variant.name', 'Size L')
+                ->has('catalogStore.name')
+            );
+    }
+
     public function test_guest_can_view_public_how_to_rent_page(): void
     {
         $this->get(route('public.how-to-rent'))
@@ -239,6 +297,22 @@ class PublicCatalogTest extends TestCase
             'name' => 'Kebaya Arsip',
             'is_active' => false,
         ]);
+        $activePackage = RentalPackage::factory()->create([
+            'name' => 'Paket Sitemap',
+            'is_active' => true,
+        ]);
+        $inactivePackage = RentalPackage::factory()->create([
+            'name' => 'Paket Arsip',
+            'is_active' => false,
+        ]);
+        RentalPackageItem::factory()->create([
+            'rental_package_id' => $activePackage->id,
+            'product_id' => $activeProduct->id,
+        ]);
+        RentalPackageItem::factory()->create([
+            'rental_package_id' => $inactivePackage->id,
+            'product_id' => $activeProduct->id,
+        ]);
 
         $this->get(route('public.sitemap'))
             ->assertOk()
@@ -247,7 +321,9 @@ class PublicCatalogTest extends TestCase
             ->assertSee(route('public.how-to-rent'), false)
             ->assertSee(route('public.faq'), false)
             ->assertSee(route('public.catalog.show', $activeProduct), false)
-            ->assertDontSee(route('public.catalog.show', $inactiveProduct), false);
+            ->assertSee(route('public.catalog.packages.show', $activePackage), false)
+            ->assertDontSee(route('public.catalog.show', $inactiveProduct), false)
+            ->assertDontSee(route('public.catalog.packages.show', $inactivePackage), false);
     }
 
     public function test_public_robots_references_sitemap(): void
@@ -311,6 +387,16 @@ class PublicCatalogTest extends TestCase
         ]);
 
         $this->get(route('public.catalog.show', $product))
+            ->assertNotFound();
+    }
+
+    public function test_public_package_detail_rejects_inactive_packages(): void
+    {
+        $package = RentalPackage::factory()->create([
+            'is_active' => false,
+        ]);
+
+        $this->get(route('public.catalog.packages.show', $package))
             ->assertNotFound();
     }
 }

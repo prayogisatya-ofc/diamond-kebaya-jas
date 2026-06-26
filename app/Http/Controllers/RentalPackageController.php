@@ -19,7 +19,7 @@ class RentalPackageController extends Controller
     {
         $packages = RentalPackage::query()
             ->withCount('items')
-            ->orderBy('name')
+            ->latest()
             ->get()
             ->map(fn (RentalPackage $rentalPackage): array => $this->packagePayload($rentalPackage));
 
@@ -58,14 +58,14 @@ class RentalPackageController extends Controller
     public function show(RentalPackage $rentalPackage): Response
     {
         $rentalPackage->load([
-            'items.product:id,name,code,base_rental_price',
-            'items.productVariant:id,product_id,name,sku,size,color,rental_price',
+            'items.product:id,name,code,image_path,base_rental_price',
+            'items.productVariant:id,product_id,name,sku,size,color,image_path,rental_price',
         ]);
 
         return Inertia::render('RentalPackages/Show', [
             'rentalPackage' => $this->packagePayload($rentalPackage),
             'items' => $rentalPackage->items
-                ->sortBy('id')
+                ->sortByDesc('created_at')
                 ->values()
                 ->map(fn (RentalPackageItem $item): array => $this->itemPayload($item)),
         ]);
@@ -74,14 +74,14 @@ class RentalPackageController extends Controller
     public function edit(RentalPackage $rentalPackage): Response
     {
         $rentalPackage->load([
-            'items.product:id,name,code,base_rental_price',
-            'items.productVariant:id,product_id,name,sku,size,color,rental_price',
+            'items.product:id,name,code,image_path,base_rental_price',
+            'items.productVariant:id,product_id,name,sku,size,color,image_path,rental_price',
         ]);
 
         return Inertia::render('RentalPackages/Edit', [
             'rentalPackage' => $this->packagePayload($rentalPackage),
             'items' => $rentalPackage->items
-                ->sortBy('id')
+                ->sortByDesc('created_at')
                 ->values()
                 ->map(fn (RentalPackageItem $item): array => $this->itemPayload($item)),
             'products' => $this->productOptions(),
@@ -196,7 +196,7 @@ class RentalPackageController extends Controller
     }
 
     /**
-     * @return array{id: int, product_id: int, product_variant_id: int|null, quantity: int, default_item_price: string|null, is_optional: bool, notes: string|null, product: array{id: int, name: string, code: string|null, base_rental_price: string}|null, product_variant: array{id: int, name: string, sku: string|null, size: string|null, color: string|null, rental_price: string|null}|null}
+     * @return array{id: int, product_id: int, product_variant_id: int|null, quantity: int, default_item_price: string|null, is_optional: bool, notes: string|null, product: array{id: int, name: string, code: string|null, image_url: string|null, base_rental_price: string}|null, product_variant: array{id: int, name: string, sku: string|null, size: string|null, color: string|null, image_url: string|null, rental_price: string|null}|null}
      */
     private function itemPayload(RentalPackageItem $item): array
     {
@@ -212,6 +212,7 @@ class RentalPackageController extends Controller
                 'id' => $item->product->id,
                 'name' => $item->product->name,
                 'code' => $item->product->code,
+                'image_url' => $item->product->imageUrl(),
                 'base_rental_price' => $item->product->base_rental_price,
             ] : null,
             'product_variant' => $item->productVariant ? [
@@ -220,6 +221,7 @@ class RentalPackageController extends Controller
                 'sku' => $item->productVariant->sku,
                 'size' => $item->productVariant->size,
                 'color' => $item->productVariant->color,
+                'image_url' => $item->productVariant->imageUrl(),
                 'rental_price' => $item->productVariant->rental_price,
             ] : null,
         ];

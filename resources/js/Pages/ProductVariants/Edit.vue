@@ -1,8 +1,10 @@
 <script setup>
-import { Head, useForm } from '@inertiajs/vue3'
+import { Head, router, useForm } from '@inertiajs/vue3'
+import { Trash2 } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Button from '@/Components/Button.vue'
 import PageHeader from '@/Components/PageHeader.vue'
+import { useConfirm } from '@/Composables/useConfirm'
 import VariantForm from './Partials/Form.vue'
 
 defineOptions({
@@ -32,10 +34,27 @@ const form = useForm({
     rental_price: props.variant.rental_price || '',
     is_active: props.variant.is_active,
 })
+const { confirmAction } = useConfirm()
 
 function submit() {
     form.post(route('product-variants.update', props.variant.id), {
         forceFormData: true,
+    })
+}
+
+async function destroyVariant() {
+    const confirmed = await confirmAction({
+        title: 'Hapus varian?',
+        message: `Varian ${props.variant.name} akan dihapus dari produk ini.`,
+        confirmLabel: 'Ya, hapus varian',
+    })
+
+    if (!confirmed) {
+        return
+    }
+
+    router.delete(route('product-variants.destroy', props.variant.id), {
+        preserveScroll: true,
     })
 }
 </script>
@@ -52,6 +71,10 @@ function submit() {
             <template #actions>
                 <Button :href="route('products.show', product.id)" variant="secondary">
                     Kembali
+                </Button>
+                <Button variant="danger" type="button" @click="destroyVariant">
+                    <Trash2 :size="18" />
+                    Hapus varian
                 </Button>
             </template>
         </PageHeader>

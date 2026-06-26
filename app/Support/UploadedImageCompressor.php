@@ -16,6 +16,7 @@ class UploadedImageCompressor
             return $image->store($directory, 'public');
         }
 
+        $source = $this->orientImage($source, $image);
         $sourceWidth = imagesx($source);
         $sourceHeight = imagesy($source);
         $scale = min(1, $maxWidth / max(1, $sourceWidth));
@@ -56,5 +57,45 @@ class UploadedImageCompressor
             'webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($image->getRealPath()) : false,
             default => false,
         };
+    }
+
+    private function orientImage(mixed $source, UploadedFile $image): mixed
+    {
+        if (! $source instanceof \GdImage || ! $this->isJpeg($image) || ! function_exists('exif_read_data')) {
+            return $source;
+        }
+
+        $exif = @exif_read_data($image->getRealPath(), 'IFD0');
+        $orientation = is_array($exif) ? ($exif['Orientation'] ?? null) : null;
+
+        if (! is_numeric($orientation)) {
+            return $source;
+        }
+
+        $orientation = (int) $orientation;
+
+        if (in_array($orientation, [2, 4, 5, 7], true) && function_exists('imageflip')) {
+            imageflip($source, IMG_FLIP_HORIZONTAL);
+        }
+
+        $rotated = match ($orientation) {
+            3, 4 => imagerotate($source, 180, 0),
+            5, 6 => imagerotate($source, 270, 0),
+            7, 8 => imagerotate($source, 90, 0),
+            default => $source,
+        };
+
+        if ($rotated instanceof \GdImage && $rotated !== $source) {
+            imagedestroy($source);
+
+            return $rotated;
+        }
+
+        return $source;
+    }
+
+    private function isJpeg(UploadedFile $image): bool
+    {
+        return in_array(strtolower($image->extension() ?: $image->getClientOriginalExtension()), ['jpg', 'jpeg'], true);
     }
 }

@@ -5,6 +5,7 @@ import { ArrowLeft, CalendarClock, CheckCircle2, CreditCard, PackagePlus, Pencil
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Button from '@/Components/Button.vue'
 import Card from '@/Components/Card.vue'
+import Modal from '@/Components/Modal.vue'
 import CurrencyInput from '@/Components/CurrencyInput.vue'
 import DateTimePicker from '@/Components/DateTimePicker.vue'
 import EmptyState from '@/Components/EmptyState.vue'
@@ -645,7 +646,7 @@ async function printThermalReceipt() {
                 </Button>
             </div>
 
-            <div class="grid gap-3 md:hidden">
+            <div class="grid gap-3 lg:hidden">
                 <span v-if="$page.props.errors.items" class="text-sm text-diamond-danger">{{ $page.props.errors.items }}</span>
                 <article
                     v-for="item in items"
@@ -703,7 +704,7 @@ async function printThermalReceipt() {
                 <EmptyState v-if="items.length === 0" title="Belum ada item" description="Item rental akan muncul setelah transaksi memiliki produk." />
             </div>
 
-            <div class="hidden overflow-x-auto rounded-3xl border border-white/70 bg-white md:block">
+            <div class="hidden overflow-x-auto rounded-3xl border border-white/70 bg-white lg:block">
                 <table class="w-full min-w-[960px] text-left text-sm">
                     <thead class="border-b border-diamond-border bg-diamond-surface-soft text-xs uppercase tracking-wide text-diamond-muted">
                         <tr>
@@ -776,7 +777,7 @@ async function printThermalReceipt() {
                 </Button>
             </div>
 
-            <div class="grid gap-3 md:hidden">
+            <div class="grid gap-3 lg:hidden">
                 <span v-if="$page.props.errors.payments" class="text-sm text-diamond-danger">{{ $page.props.errors.payments }}</span>
                 <article
                     v-for="payment in payments"
@@ -808,7 +809,7 @@ async function printThermalReceipt() {
                 <EmptyState v-if="payments.length === 0" title="Belum ada pembayaran" description="Riwayat pembayaran akan muncul setelah staff menambahkan pembayaran." />
             </div>
 
-            <div class="hidden overflow-x-auto rounded-3xl border border-white/70 bg-white md:block">
+            <div class="hidden overflow-x-auto rounded-3xl border border-white/70 bg-white lg:block">
                 <table class="w-full min-w-[820px] text-left text-sm">
                     <thead class="border-b border-diamond-border bg-diamond-surface-soft text-xs uppercase tracking-wide text-diamond-muted">
                         <tr>
@@ -847,200 +848,168 @@ async function printThermalReceipt() {
             </div>
         </section>
 
-        <Teleport to="body">
-            <div
-                v-if="pickUpModalOpen"
-                class="fixed inset-0 z-[95] flex items-start justify-center overflow-y-auto bg-slate-950/45 px-4 py-6 backdrop-blur-sm"
-                role="presentation"
-                @click.self="closePickUpModal"
-            >
-                <section class="flex max-h-[92vh] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-white/80 bg-white">
-                    <div class="flex items-start justify-between gap-4 border-b border-diamond-border p-5 sm:p-6">
-                        <div class="min-w-0">
-                            <p class="text-xs font-bold uppercase tracking-[0.18em] text-diamond-accent">Pengambilan barang</p>
-                            <h2 class="mt-1 text-xl font-bold text-diamond-text">Tandai barang diambil</h2>
-                            <p class="mt-2 text-sm leading-6 text-diamond-muted">
-                                Pastikan jaminan sudah diterima saat barang keluar dari toko.
+        <Modal :open="pickUpModalOpen" max-width="max-w-2xl" @close="closePickUpModal">
+            <template #header>
+                <div class="min-w-0">
+                    <p class="text-xs font-bold uppercase tracking-[0.18em] text-diamond-accent">Pengambilan barang</p>
+                    <h2 class="mt-1 text-xl font-bold text-diamond-text">Tandai barang diambil</h2>
+                    <p class="mt-2 text-sm leading-6 text-diamond-muted">
+                        Pastikan jaminan sudah diterima saat barang keluar dari toko.
+                    </p>
+                </div>
+            </template>
+
+            <form class="grid gap-5" @submit.prevent="markPickedUp">
+                <label class="grid min-w-0 gap-2">
+                    <span class="text-sm font-semibold text-diamond-text">Jaminan</span>
+                    <select v-model="pickUpForm.guarantee_type" :class="fieldClasses()" class="uppercase">
+                        <option value="">Pilih jaminan</option>
+                        <option value="ktp">KTP</option>
+                        <option value="sim">SIM</option>
+                    </select>
+                    <span v-if="pickUpForm.errors.guarantee_type" class="text-sm text-diamond-danger">{{ pickUpForm.errors.guarantee_type }}</span>
+                </label>
+
+                <div class="rounded-3xl bg-diamond-surface-soft p-4">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-semibold text-diamond-muted">Invoice</p>
+                            <p class="mt-1 text-base font-bold text-diamond-text">{{ rental.invoice_number }}</p>
+                            <p class="mt-1 text-sm text-diamond-muted">{{ rental.customer?.name || '-' }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-diamond-muted">Sisa bayar</p>
+                            <p class="mt-1 text-base font-bold" :class="pickUpPaymentRequired ? 'text-diamond-danger' : 'text-emerald-700'">
+                                {{ formatMoney(rental.remaining_amount) }}
                             </p>
                         </div>
-                        <button
-                            class="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-2xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-text"
-                            type="button"
-                            @click="closePickUpModal"
-                        >
-                            <X :size="20" />
-                        </button>
+                    </div>
+                </div>
+
+                <div v-if="pickUpPaymentRequired" class="grid gap-4 rounded-3xl border border-diamond-border bg-white p-4">
+                    <div>
+                        <h3 class="text-base font-bold text-diamond-text">Pelunasan saat ambil</h3>
+                        <p class="mt-1 text-sm leading-6 text-diamond-muted">
+                            Barang hanya bisa ditandai diambil setelah sisa pembayaran dilunasi.
+                        </p>
                     </div>
 
-                    <form class="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 sm:p-6" @submit.prevent="markPickedUp">
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <CurrencyInput v-model="pickUpForm.payment_amount" :error="pickUpForm.errors.payment_amount" label="Nominal pelunasan" />
+
                         <label class="grid min-w-0 gap-2">
-                            <span class="text-sm font-semibold text-diamond-text">Jaminan</span>
-                            <select v-model="pickUpForm.guarantee_type" :class="fieldClasses()" class="uppercase">
-                                <option value="">Pilih jaminan</option>
-                                <option value="ktp">KTP</option>
-                                <option value="sim">SIM</option>
+                            <span class="text-sm font-semibold text-diamond-text">Metode pelunasan</span>
+                            <select v-model="pickUpForm.payment_method" :class="fieldClasses()">
+                                <option value="cash">Cash</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="qris">QRIS</option>
+                                <option value="debit">Debit</option>
+                                <option value="other">Other</option>
                             </select>
-                            <span v-if="pickUpForm.errors.guarantee_type" class="text-sm text-diamond-danger">{{ pickUpForm.errors.guarantee_type }}</span>
+                            <span v-if="pickUpForm.errors.payment_method" class="text-sm text-diamond-danger">{{ pickUpForm.errors.payment_method }}</span>
                         </label>
 
-                        <div class="rounded-3xl bg-diamond-surface-soft p-4">
-                            <div class="flex items-start justify-between gap-4">
-                                <div>
-                                    <p class="text-sm font-semibold text-diamond-muted">Invoice</p>
-                                    <p class="mt-1 text-base font-bold text-diamond-text">{{ rental.invoice_number }}</p>
-                                    <p class="mt-1 text-sm text-diamond-muted">{{ rental.customer?.name || '-' }}</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-sm font-semibold text-diamond-muted">Sisa bayar</p>
-                                    <p class="mt-1 text-base font-bold" :class="pickUpPaymentRequired ? 'text-diamond-danger' : 'text-emerald-700'">
-                                        {{ formatMoney(rental.remaining_amount) }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                        <DateTimePicker
+                            v-model="pickUpForm.paid_at"
+                            :error="pickUpForm.errors.paid_at"
+                            label="Tanggal pelunasan"
+                            placeholder="Pilih tanggal bayar"
+                        />
 
-                        <div v-if="pickUpPaymentRequired" class="grid gap-4 rounded-3xl border border-diamond-border bg-white p-4">
-                            <div>
-                                <h3 class="text-base font-bold text-diamond-text">Pelunasan saat ambil</h3>
-                                <p class="mt-1 text-sm leading-6 text-diamond-muted">
-                                    Barang hanya bisa ditandai diambil setelah sisa pembayaran dilunasi.
-                                </p>
-                            </div>
+                        <label class="grid gap-2">
+                            <span class="text-sm font-semibold text-diamond-text">Catatan pelunasan</span>
+                            <input v-model="pickUpForm.payment_notes" :class="fieldClasses()" type="text">
+                            <span v-if="pickUpForm.errors.payment_notes" class="text-sm text-diamond-danger">{{ pickUpForm.errors.payment_notes }}</span>
+                        </label>
+                    </div>
+                </div>
 
-                            <div class="grid gap-4 md:grid-cols-2">
-                                <CurrencyInput v-model="pickUpForm.payment_amount" :error="pickUpForm.errors.payment_amount" label="Nominal pelunasan" />
+                <div v-else class="rounded-3xl bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-700">
+                    Transaksi sudah lunas. Barang bisa langsung ditandai diambil setelah jaminan diterima.
+                </div>
 
-                                <label class="grid min-w-0 gap-2">
-                                    <span class="text-sm font-semibold text-diamond-text">Metode pelunasan</span>
-                                    <select v-model="pickUpForm.payment_method" :class="fieldClasses()">
-                                        <option value="cash">Cash</option>
-                                        <option value="transfer">Transfer</option>
-                                        <option value="qris">QRIS</option>
-                                        <option value="debit">Debit</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                    <span v-if="pickUpForm.errors.payment_method" class="text-sm text-diamond-danger">{{ pickUpForm.errors.payment_method }}</span>
-                                </label>
+                <div class="flex flex-col-reverse gap-3 border-t border-diamond-border pt-5 sm:flex-row sm:justify-end">
+                    <Button type="button" variant="secondary" @click="closePickUpModal">Batal</Button>
+                    <Button type="submit" :disabled="pickUpForm.processing">
+                        <ShoppingBag :size="18" />
+                        {{ pickUpForm.processing ? 'Memproses...' : 'Tandai diambil' }}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
 
-                                <DateTimePicker
-                                    v-model="pickUpForm.paid_at"
-                                    :error="pickUpForm.errors.paid_at"
-                                    label="Tanggal pelunasan"
-                                    placeholder="Pilih tanggal bayar"
-                                />
+        <Modal :open="returnModalOpen" max-width="max-w-2xl" @close="closeReturnModal">
+            <template #header>
+                <div class="min-w-0">
+                    <p class="text-xs font-bold uppercase tracking-[0.18em] text-diamond-accent">Pengembalian barang</p>
+                    <h2 class="mt-1 text-xl font-bold text-diamond-text">Tandai barang dikembalikan</h2>
+                </div>
+            </template>
 
-                                <label class="grid gap-2">
-                                    <span class="text-sm font-semibold text-diamond-text">Catatan pelunasan</span>
-                                    <input v-model="pickUpForm.payment_notes" :class="fieldClasses()" type="text">
-                                    <span v-if="pickUpForm.errors.payment_notes" class="text-sm text-diamond-danger">{{ pickUpForm.errors.payment_notes }}</span>
-                                </label>
-                            </div>
-                        </div>
+            <form class="grid gap-5" @submit.prevent="markReturned">
+                <div class="grid gap-4 md:grid-cols-2">
+                    <DateTimePicker
+                        v-model="returnForm.returned_at"
+                        :error="returnForm.errors.returned_at"
+                        label="Tanggal barang dikembalikan"
+                        placeholder="Pilih tanggal kembali"
+                    />
+                    <div class="grid gap-2">
+                        <span class="text-sm font-semibold text-diamond-text">Estimasi terlambat</span>
+                        <p class="min-h-12 rounded-xl border border-diamond-border bg-diamond-surface-soft px-4 py-3 text-sm font-bold text-diamond-text">
+                            {{ estimatedPenaltyDays }} hari
+                        </p>
+                    </div>
+                </div>
 
-                        <div v-else class="rounded-3xl bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-700">
-                            Transaksi sudah lunas. Barang bisa langsung ditandai diambil setelah jaminan diterima.
-                        </div>
-
-                        <div class="flex flex-col-reverse gap-3 border-t border-diamond-border pt-5 sm:flex-row sm:justify-end">
-                            <Button type="button" variant="secondary" @click="closePickUpModal">Batal</Button>
-                            <Button type="submit" :disabled="pickUpForm.processing">
-                                <ShoppingBag :size="18" />
-                                {{ pickUpForm.processing ? 'Memproses...' : 'Tandai diambil' }}
-                            </Button>
-                        </div>
-                    </form>
-                </section>
-            </div>
-        </Teleport>
-
-        <Teleport to="body">
-            <div
-                v-if="returnModalOpen"
-                class="fixed inset-0 z-[95] flex items-start justify-center overflow-y-auto bg-slate-950/45 px-4 py-6 backdrop-blur-sm"
-                role="presentation"
-                @click.self="closeReturnModal"
-            >
-                <section class="flex max-h-[92vh] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-white/80 bg-white">
-                    <div class="flex items-start justify-between gap-4 border-b border-diamond-border p-5 sm:p-6">
-                        <div class="min-w-0">
-                            <p class="text-xs font-bold uppercase tracking-[0.18em] text-diamond-accent">Pengembalian barang</p>
-                            <h2 class="mt-1 text-xl font-bold text-diamond-text">Tandai barang dikembalikan</h2>
-                        </div>
-                        <button
-                            class="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-2xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-text"
-                            type="button"
-                            @click="closeReturnModal"
-                        >
-                            <X :size="20" />
-                        </button>
+                <div class="grid gap-4 rounded-3xl border border-diamond-border bg-white p-4">
+                    <div>
+                        <h3 class="text-base font-bold text-diamond-text">Denda keterlambatan</h3>
                     </div>
 
-                    <form class="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 sm:p-6" @submit.prevent="markReturned">
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <DateTimePicker
-                                v-model="returnForm.returned_at"
-                                :error="returnForm.errors.returned_at"
-                                label="Tanggal barang dikembalikan"
-                                placeholder="Pilih tanggal kembali"
-                            />
-                            <div class="grid gap-2">
-                                <span class="text-sm font-semibold text-diamond-text">Estimasi terlambat</span>
-                                <p class="min-h-12 rounded-xl border border-diamond-border bg-diamond-surface-soft px-4 py-3 text-sm font-bold text-diamond-text">
-                                    {{ estimatedPenaltyDays }} hari
-                                </p>
-                            </div>
-                        </div>
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <CurrencyInput
+                            v-model="returnForm.penalty_amount"
+                            :error="returnForm.errors.penalty_amount"
+                            label="Nominal denda"
+                        />
 
-                        <div class="grid gap-4 rounded-3xl border border-diamond-border bg-white p-4">
-                            <div>
-                                <h3 class="text-base font-bold text-diamond-text">Denda keterlambatan</h3>
-                            </div>
+                        <label class="grid min-w-0 gap-2">
+                            <span class="text-sm font-semibold text-diamond-text">Metode bayar denda</span>
+                            <select v-model="returnForm.penalty_payment_method" :class="fieldClasses()">
+                                <option value="cash">Cash</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="qris">QRIS</option>
+                                <option value="debit">Debit</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <span v-if="returnForm.errors.penalty_payment_method" class="text-sm text-diamond-danger">{{ returnForm.errors.penalty_payment_method }}</span>
+                        </label>
 
-                            <div class="grid gap-4 md:grid-cols-2">
-                                <CurrencyInput
-                                    v-model="returnForm.penalty_amount"
-                                    :error="returnForm.errors.penalty_amount"
-                                    label="Nominal denda"
-                                />
+                        <DateTimePicker
+                            v-model="returnForm.penalty_paid_at"
+                            :error="returnForm.errors.penalty_paid_at"
+                            label="Tanggal bayar denda"
+                            placeholder="Pilih tanggal bayar"
+                        />
 
-                                <label class="grid min-w-0 gap-2">
-                                    <span class="text-sm font-semibold text-diamond-text">Metode bayar denda</span>
-                                    <select v-model="returnForm.penalty_payment_method" :class="fieldClasses()">
-                                        <option value="cash">Cash</option>
-                                        <option value="transfer">Transfer</option>
-                                        <option value="qris">QRIS</option>
-                                        <option value="debit">Debit</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                    <span v-if="returnForm.errors.penalty_payment_method" class="text-sm text-diamond-danger">{{ returnForm.errors.penalty_payment_method }}</span>
-                                </label>
+                        <label class="grid gap-2">
+                            <span class="text-sm font-semibold text-diamond-text">Catatan denda</span>
+                            <input v-model="returnForm.penalty_notes" :class="fieldClasses()" type="text">
+                            <span v-if="returnForm.errors.penalty_notes" class="text-sm text-diamond-danger">{{ returnForm.errors.penalty_notes }}</span>
+                        </label>
+                    </div>
+                </div>
 
-                                <DateTimePicker
-                                    v-model="returnForm.penalty_paid_at"
-                                    :error="returnForm.errors.penalty_paid_at"
-                                    label="Tanggal bayar denda"
-                                    placeholder="Pilih tanggal bayar"
-                                />
-
-                                <label class="grid gap-2">
-                                    <span class="text-sm font-semibold text-diamond-text">Catatan denda</span>
-                                    <input v-model="returnForm.penalty_notes" :class="fieldClasses()" type="text">
-                                    <span v-if="returnForm.errors.penalty_notes" class="text-sm text-diamond-danger">{{ returnForm.errors.penalty_notes }}</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col-reverse gap-3 border-t border-diamond-border pt-5 sm:flex-row sm:justify-end">
-                            <Button type="button" variant="secondary" @click="closeReturnModal">Batal</Button>
-                            <Button type="submit" :disabled="returnForm.processing">
-                                <RotateCcw :size="18" />
-                                {{ returnForm.processing ? 'Memproses...' : 'Tandai dikembalikan' }}
-                            </Button>
-                        </div>
-                    </form>
-                </section>
-            </div>
-        </Teleport>
+                <div class="flex flex-col-reverse gap-3 border-t border-diamond-border pt-5 sm:flex-row sm:justify-end">
+                    <Button type="button" variant="secondary" @click="closeReturnModal">Batal</Button>
+                    <Button type="submit" :disabled="returnForm.processing">
+                        <RotateCcw :size="18" />
+                        {{ returnForm.processing ? 'Memproses...' : 'Tandai dikembalikan' }}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
 
         <Teleport to="body">
             <div
@@ -1176,74 +1145,58 @@ async function printThermalReceipt() {
             </div>
         </Teleport>
 
-        <Teleport to="body">
-            <div
-                v-if="paymentModalOpen"
-                class="fixed inset-0 z-[95] flex items-start justify-center overflow-y-auto bg-slate-950/45 px-4 py-6 backdrop-blur-sm"
-                role="presentation"
-                @click.self="closePaymentModal"
-            >
-                <section class="flex max-h-[92vh] min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-white/80 bg-white">
-                    <div class="flex items-start justify-between gap-4 border-b border-diamond-border p-5 sm:p-6">
-                        <div class="min-w-0">
-                            <p class="text-xs font-bold uppercase tracking-[0.18em] text-diamond-accent">Pembayaran</p>
-                            <h2 class="mt-1 truncate text-xl font-bold text-diamond-text">Tambah pembayaran</h2>
-                        </div>
-                        <button
-                            class="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-2xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-text"
-                            type="button"
-                            @click="closePaymentModal"
-                        >
-                            <X :size="20" />
-                        </button>
-                    </div>
+        <Modal :open="paymentModalOpen" max-width="max-w-3xl" @close="closePaymentModal">
+            <template #header>
+                <div class="min-w-0">
+                    <p class="text-xs font-bold uppercase tracking-[0.18em] text-diamond-accent">Pembayaran</p>
+                    <h2 class="mt-1 truncate text-xl font-bold text-diamond-text">Tambah pembayaran</h2>
+                </div>
+            </template>
 
-                    <form class="grid min-h-0 flex-1 gap-4 overflow-y-auto p-5 sm:p-6" @submit.prevent="submitPayment">
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <label class="grid min-w-0 gap-2">
-                                <span class="text-sm font-semibold text-diamond-text">Tipe pembayaran</span>
-                                <select v-model="paymentForm.payment_type" :class="fieldClasses()">
-                                    <option value="dp">DP</option>
-                                    <option value="pelunasan">Pelunasan</option>
-                                    <option value="denda">Denda</option>
-                                    <option value="refund">Refund</option>
-                                    <option value="adjustment">Adjustment</option>
-                                </select>
-                                <span v-if="paymentForm.errors.payment_type" class="text-sm text-diamond-danger">{{ paymentForm.errors.payment_type }}</span>
-                            </label>
+            <form class="grid gap-4" @submit.prevent="submitPayment">
+                <div class="grid gap-4 md:grid-cols-2">
+                    <label class="grid min-w-0 gap-2">
+                        <span class="text-sm font-semibold text-diamond-text">Tipe pembayaran</span>
+                        <select v-model="paymentForm.payment_type" :class="fieldClasses()">
+                            <option value="dp">DP</option>
+                            <option value="pelunasan">Pelunasan</option>
+                            <option value="denda">Denda</option>
+                            <option value="refund">Refund</option>
+                            <option value="adjustment">Adjustment</option>
+                        </select>
+                        <span v-if="paymentForm.errors.payment_type" class="text-sm text-diamond-danger">{{ paymentForm.errors.payment_type }}</span>
+                    </label>
 
-                            <label class="grid min-w-0 gap-2">
-                                <span class="text-sm font-semibold text-diamond-text">Metode</span>
-                                <select v-model="paymentForm.payment_method" :class="fieldClasses()">
-                                    <option value="cash">Cash</option>
-                                    <option value="transfer">Transfer</option>
-                                    <option value="qris">QRIS</option>
-                                    <option value="debit">Debit</option>
-                                    <option value="other">Other</option>
-                                </select>
-                                <span v-if="paymentForm.errors.payment_method" class="text-sm text-diamond-danger">{{ paymentForm.errors.payment_method }}</span>
-                            </label>
+                    <label class="grid min-w-0 gap-2">
+                        <span class="text-sm font-semibold text-diamond-text">Metode</span>
+                        <select v-model="paymentForm.payment_method" :class="fieldClasses()">
+                            <option value="cash">Cash</option>
+                            <option value="transfer">Transfer</option>
+                            <option value="qris">QRIS</option>
+                            <option value="debit">Debit</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <span v-if="paymentForm.errors.payment_method" class="text-sm text-diamond-danger">{{ paymentForm.errors.payment_method }}</span>
+                    </label>
 
-                            <CurrencyInput v-model="paymentForm.amount" :error="paymentForm.errors.amount" label="Nominal" />
-                            <DateTimePicker v-model="paymentForm.paid_at" :error="paymentForm.errors.paid_at" label="Tanggal bayar" placeholder="Pilih tanggal bayar" />
-                        </div>
+                    <CurrencyInput v-model="paymentForm.amount" :error="paymentForm.errors.amount" label="Nominal" />
+                    <DateTimePicker v-model="paymentForm.paid_at" :error="paymentForm.errors.paid_at" label="Tanggal bayar" placeholder="Pilih tanggal bayar" />
+                </div>
 
-                        <label class="grid gap-2">
-                            <span class="text-sm font-semibold text-diamond-text">Catatan pembayaran</span>
-                            <textarea v-model="paymentForm.notes" :class="textareaClasses()" />
-                            <span v-if="paymentForm.errors.notes" class="text-sm text-diamond-danger">{{ paymentForm.errors.notes }}</span>
-                        </label>
+                <label class="grid gap-2">
+                    <span class="text-sm font-semibold text-diamond-text">Catatan pembayaran</span>
+                    <textarea v-model="paymentForm.notes" :class="textareaClasses()" />
+                    <span v-if="paymentForm.errors.notes" class="text-sm text-diamond-danger">{{ paymentForm.errors.notes }}</span>
+                </label>
 
-                        <div class="flex flex-col-reverse gap-3 border-t border-diamond-border pt-5 sm:flex-row sm:justify-end">
-                            <Button type="button" variant="secondary" @click="closePaymentModal">Batal</Button>
-                            <Button type="submit" :disabled="paymentForm.processing">
-                                <Save :size="18" />
-                                {{ paymentForm.processing ? 'Menyimpan...' : 'Tambah pembayaran' }}
-                            </Button>
-                        </div>
-                    </form>
-                </section>
-            </div>
-        </Teleport>
+                <div class="flex flex-col-reverse gap-3 border-t border-diamond-border pt-5 sm:flex-row sm:justify-end">
+                    <Button type="button" variant="secondary" @click="closePaymentModal">Batal</Button>
+                    <Button type="submit" :disabled="paymentForm.processing">
+                        <Save :size="18" />
+                        {{ paymentForm.processing ? 'Menyimpan...' : 'Tambah pembayaran' }}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
     </section>
 </template>

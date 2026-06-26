@@ -29,7 +29,7 @@ class CustomerController extends Controller
                         ->orWhere('whatsapp_number', 'like', "%{$search}%");
                 });
             })
-            ->orderBy('name')
+            ->latest()
             ->paginate(10)
             ->withQueryString()
             ->through(fn (Customer $customer): array => $this->customerPayload($customer));

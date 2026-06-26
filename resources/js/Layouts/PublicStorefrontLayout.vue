@@ -22,7 +22,18 @@ const publicLogoUrl = '/logo-diamond.png'
 const catalogStore = computed(() => page.props.catalogStore ?? {
     name: 'Diamond Kebaya & Jas',
     whatsapp_number: '',
+    primary_color: '#6533D6',
 })
+
+const primaryColor = computed(() => {
+    const color = String(catalogStore.value.primary_color || '#6533D6')
+
+    return /^#(?:[0-9a-fA-F]{3}){1,2}$/.test(color) ? color : '#6533D6'
+})
+
+const cssVars = computed(() => ({
+    '--catalog-primary': primaryColor.value,
+}))
 
 const navItems = [
     { key: 'home', label: 'Beranda', route: 'public.catalog' },
@@ -36,6 +47,8 @@ const whatsappUrl = computed(() => {
 
     return phone ? `https://wa.me/${phone}?text=${message}` : '#'
 })
+
+const adminPanelUrl = computed(() => appRoute('dashboard'))
 
 function normalizePhone(value) {
     const digits = String(value || '').replace(/\D/g, '')
@@ -72,7 +85,7 @@ function closeMobileMenu() {
 </script>
 
 <template>
-    <main class="font-public min-h-screen w-full overflow-x-hidden bg-white text-[#202638]">
+    <main :style="cssVars" class="font-public min-h-screen w-full overflow-x-hidden bg-white text-[#202638]">
         <header class="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-md">
             <div class="hidden h-[88px] items-center justify-between px-6 lg:flex xl:px-12">
                 <Link :href="appRoute('public.catalog')" class="flex items-center gap-3">
@@ -91,17 +104,29 @@ function closeMobileMenu() {
                     </Link>
                 </nav>
 
-                <a
-                    :href="whatsappUrl"
-                    class="flex h-12 items-center gap-2 rounded-full bg-emerald-50 px-5 text-sm font-extrabold text-emerald-700 transition hover:bg-emerald-100"
-                    target="_blank"
-                    rel="noreferrer"
-                >
-                    <PublicIcon name="brand-whatsapp" :size="24" class="text-emerald-500" />
-                    <span class="leading-tight">
-                        <span class="block">WhatsApp</span>
-                    </span>
-                </a>
+                <div class="flex items-center gap-3">
+                    <Link
+                        :href="adminPanelUrl"
+                        class="flex h-12 items-center gap-2 rounded-full border border-violet-100 bg-violet-50 px-5 text-sm font-extrabold text-[var(--catalog-primary,#6533D6)] transition hover:bg-violet-100"
+                    >
+                        <PublicIcon name="apps" :size="22" />
+                        <span class="leading-tight">
+                            <span class="block">Panel Admin</span>
+                        </span>
+                    </Link>
+
+                    <a
+                        :href="whatsappUrl"
+                        class="flex h-12 items-center gap-2 rounded-full bg-emerald-50 px-5 text-sm font-extrabold text-emerald-700 transition hover:bg-emerald-100"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        <PublicIcon name="brand-whatsapp" :size="24" class="text-emerald-500" />
+                        <span class="leading-tight">
+                            <span class="block">WhatsApp</span>
+                        </span>
+                    </a>
+                </div>
             </div>
 
             <div class="flex h-[72px] items-center justify-between px-4 lg:hidden">
@@ -125,6 +150,15 @@ function closeMobileMenu() {
 
             <div v-if="mobileNavOpen" class="border-t border-slate-100 bg-white px-4 py-4 lg:hidden">
                 <nav class="grid gap-2">
+                    <Link
+                        :href="adminPanelUrl"
+                        class="flex items-center gap-3 rounded-2xl bg-violet-50 px-4 py-3 text-sm font-extrabold text-[var(--catalog-primary,#6533D6)] transition hover:bg-violet-100"
+                        @click="closeMobileMenu"
+                    >
+                        <PublicIcon name="apps" :size="21" />
+                        Panel Admin
+                    </Link>
+
                     <Link
                         v-for="item in navItems"
                         :key="item.key"

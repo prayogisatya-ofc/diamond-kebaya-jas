@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
+use App\Models\RentalPackage;
+use App\Models\RentalPackageItem;
 use App\Models\Setting;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,7 +29,7 @@ class PublicCatalogController extends Controller
                 'category:id,name,slug,is_active',
                 'variants' => fn ($query) => $query
                     ->where('is_active', true)
-                    ->orderBy('name')
+                    ->latest()
                     ->select(['id', 'product_id', 'sku', 'name', 'size', 'color', 'image_path', 'stock_quantity', 'rental_price', 'is_active']),
             ])
             ->where('is_active', true)
@@ -58,8 +61,51 @@ class PublicCatalogController extends Controller
         return Inertia::render('Public/Catalog', [
             'catalogStore' => $this->storePayload(),
             'products' => $products,
+            'packages' => $this->packageOptions($filters),
             'filters' => $filters,
             'categories' => $this->categoryOptions(),
+        ]);
+    }
+
+    public function packageShow(RentalPackage $rentalPackage): Response
+    {
+        abort_unless($rentalPackage->is_active, 404);
+
+        $rentalPackage->load([
+            'items.product:id,product_category_id,name,code,image_path,base_rental_price,is_active',
+            'items.product.category:id,name,slug,is_active',
+            'items.productVariant:id,product_id,name,sku,size,color,image_path,rental_price,is_active',
+        ]);
+
+        $items = $rentalPackage->items
+            ->filter(fn (RentalPackageItem $item): bool => (bool) $item->product?->is_active && (bool) $item->product?->category?->is_active)
+            ->sortByDesc('created_at')
+            ->values();
+
+        $relatedPackages = RentalPackage::query()
+            ->with([
+                'items' => fn ($query) => $query->latest(),
+                'items.product:id,product_category_id,name,code,image_path,base_rental_price,is_active',
+                'items.product.category:id,name,slug,is_active',
+                'items.productVariant:id,product_id,name,sku,size,color,image_path,rental_price,is_active',
+            ])
+            ->withCount('items')
+            ->where('is_active', true)
+            ->whereKeyNot($rentalPackage->id)
+            ->latest()
+            ->limit(4)
+            ->get()
+            ->map(fn (RentalPackage $relatedPackage): array => $this->packagePayload($relatedPackage))
+            ->values()
+            ->all();
+
+        return Inertia::render('Public/PackageShow', [
+            'catalogStore' => $this->storePayload(),
+            'rentalPackage' => $this->packagePayload($rentalPackage, $items),
+            'items' => $items
+                ->map(fn (RentalPackageItem $item): array => $this->packageItemPayload($item))
+                ->all(),
+            'relatedPackages' => $relatedPackages,
         ]);
     }
 
@@ -71,7 +117,7 @@ class PublicCatalogController extends Controller
             'category:id,name,slug,is_active',
             'variants' => fn ($query) => $query
                 ->where('is_active', true)
-                ->orderBy('name')
+                ->latest()
                 ->select(['id', 'product_id', 'sku', 'name', 'size', 'color', 'image_path', 'stock_quantity', 'rental_price', 'is_active']),
         ]);
 
@@ -82,13 +128,13 @@ class PublicCatalogController extends Controller
                 'category:id,name,slug,is_active',
                 'variants' => fn ($query) => $query
                     ->where('is_active', true)
-                    ->orderBy('name')
+                    ->latest()
                     ->select(['id', 'product_id', 'sku', 'name', 'size', 'color', 'image_path', 'stock_quantity', 'rental_price', 'is_active']),
             ])
             ->where('is_active', true)
             ->where('product_category_id', $product->product_category_id)
             ->whereKeyNot($product->id)
-            ->orderBy('name')
+            ->latest()
             ->limit(3)
             ->get()
             ->map(fn (Product $relatedProduct): array => $this->productPayload($relatedProduct, 4))
@@ -170,9 +216,67 @@ class PublicCatalogController extends Controller
                 ->orderByRaw('COALESCE(lowest_variant_price, base_rental_price) desc')
                 ->orderBy('name'),
             'name_desc' => $query->orderByDesc('name'),
-            'latest' => $query->latest()->orderBy('name'),
-            default => $query->orderBy('name'),
+            'latest' => $query->latest(),
+            default => $query->latest(),
         };
+    }
+
+    /**
+     * @param  array{search: string, category: string, sort: string}  $filters
+     * @return array<int, array{id: string, name: string, description: string|null, package_price: string, image_url: string|null, items_count: int, required_items_count: int, optional_items_count: int, preview_items: array<int, array{id: string, name: string, variant_name: string|null, image_url: string|null, quantity: int, is_optional: bool}>}>
+     */
+    private function packageOptions(array $filters): array
+    {
+        $query = RentalPackage::query()
+            ->with([
+                'items' => fn ($query) => $query->latest(),
+                'items.product:id,product_category_id,name,code,image_path,base_rental_price,is_active',
+                'items.product.category:id,name,slug,is_active',
+                'items.productVariant:id,product_id,name,sku,size,color,image_path,rental_price,is_active',
+            ])
+            ->withCount('items')
+            ->where('is_active', true)
+            ->whereHas('items.product', fn ($query) => $query
+                ->where('is_active', true)
+                ->whereHas('category', fn ($query) => $query->where('is_active', true)))
+            ->when($filters['search'] !== '', function ($query) use ($filters): void {
+                $query->where(function ($query) use ($filters): void {
+                    $query
+                        ->where('name', 'like', "%{$filters['search']}%")
+                        ->orWhere('description', 'like', "%{$filters['search']}%")
+                        ->orWhereHas('items.product', function ($query) use ($filters): void {
+                            $query
+                                ->where('name', 'like', "%{$filters['search']}%")
+                                ->orWhere('code', 'like', "%{$filters['search']}%");
+                        })
+                        ->orWhereHas('items.productVariant', function ($query) use ($filters): void {
+                            $query
+                                ->where('name', 'like', "%{$filters['search']}%")
+                                ->orWhere('sku', 'like', "%{$filters['search']}%")
+                                ->orWhere('color', 'like', "%{$filters['search']}%");
+                        });
+                });
+            })
+            ->when($filters['category'] !== '', function ($query) use ($filters): void {
+                $query->whereHas('items.product', fn ($query) => $query
+                    ->where('product_category_id', $filters['category'])
+                    ->where('is_active', true)
+                    ->whereHas('category', fn ($query) => $query->where('is_active', true)));
+            });
+
+        match ($filters['sort']) {
+            'price_asc' => $query->orderBy('package_price')->orderBy('name'),
+            'price_desc' => $query->orderByDesc('package_price')->orderBy('name'),
+            'name_desc' => $query->orderByDesc('name'),
+            'name_asc' => $query->orderBy('name'),
+            default => $query->latest(),
+        };
+
+        return $query
+            ->limit(6)
+            ->get()
+            ->map(fn (RentalPackage $rentalPackage): array => $this->packagePayload($rentalPackage))
+            ->all();
     }
 
     /**
@@ -277,7 +381,7 @@ class PublicCatalogController extends Controller
     }
 
     /**
-     * @return array{id: string, name: string, code: string|null, description: string|null, category: array{id: string, name: string}|null, image_url: string|null, base_rental_price: string, lowest_price: float|int|string, variants_count: int, total_stock: int, colors: array<int, string>, sizes: array<int, string>, variants: array<int, array{id: string, sku: string|null, name: string, size: string|null, color: string|null, image_url: string|null, stock_quantity: int, rental_price: string|null}>}
+     * @return array{type: string, id: string, name: string, code: string|null, description: string|null, category: array{id: string, name: string}|null, image_url: string|null, base_rental_price: string, lowest_price: float|int|string, variants_count: int, total_stock: int, colors: array<int, string>, sizes: array<int, string>, variants: array<int, array{id: string, sku: string|null, name: string, size: string|null, color: string|null, image_url: string|null, stock_quantity: int, rental_price: string|null}>}
      */
     private function productPayload(Product $product, ?int $variantLimit = null): array
     {
@@ -290,8 +394,10 @@ class PublicCatalogController extends Controller
             ->map(fn (mixed $price): float => (float) $price);
 
         return [
+            'type' => 'product',
             'id' => $product->id,
             'name' => $product->name,
+            'created_at' => $product->created_at,
             'code' => $product->code,
             'description' => $product->description,
             'category' => $product->category ? [
@@ -319,5 +425,91 @@ class PublicCatalogController extends Controller
                 ->values()
                 ->all(),
         ];
+    }
+
+    /**
+     * @param  Collection<int, RentalPackageItem>|null  $items
+     * @return array{type: string, id: string, name: string, description: string|null, package_price: string, image_url: string|null, items_count: int, required_items_count: int, optional_items_count: int, preview_items: array<int, array{id: string, name: string, variant_name: string|null, image_url: string|null, quantity: int, is_optional: bool}>}
+     */
+    private function packagePayload(RentalPackage $rentalPackage, ?Collection $items = null): array
+    {
+        $packageItems = $items ?? $rentalPackage->items
+            ->filter(fn (RentalPackageItem $item): bool => (bool) $item->product?->is_active && (bool) $item->product?->category?->is_active)
+            ->values();
+
+        return [
+            'type' => 'package',
+            'id' => $rentalPackage->id,
+            'name' => $rentalPackage->name,
+            'created_at' => $rentalPackage->created_at,
+            'description' => $rentalPackage->description,
+            'package_price' => $rentalPackage->package_price,
+            'image_url' => $this->packageImageUrl($packageItems),
+            'items_count' => $packageItems->count(),
+            'required_items_count' => $packageItems->where('is_optional', false)->count(),
+            'optional_items_count' => $packageItems->where('is_optional', true)->count(),
+            'preview_items' => $packageItems
+                ->take(4)
+                ->map(fn (RentalPackageItem $item): array => $this->packageItemPreviewPayload($item))
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * @return array{id: string, name: string, variant_name: string|null, image_url: string|null, quantity: int, default_item_price: string|null, is_optional: bool, notes: string|null, product: array{id: string, name: string, code: string|null, image_url: string|null, base_rental_price: string, category: array{id: string, name: string}|null}|null, product_variant: array{id: string, name: string, sku: string|null, size: string|null, color: string|null, image_url: string|null, rental_price: string|null}|null}
+     */
+    private function packageItemPayload(RentalPackageItem $item): array
+    {
+        return [
+            ...$this->packageItemPreviewPayload($item),
+            'default_item_price' => $item->default_item_price,
+            'notes' => $item->notes,
+            'product' => $item->product ? [
+                'id' => $item->product->id,
+                'name' => $item->product->name,
+                'code' => $item->product->code,
+                'image_url' => $item->product->imageUrl(),
+                'base_rental_price' => $item->product->base_rental_price,
+                'category' => $item->product->category ? [
+                    'id' => $item->product->category->id,
+                    'name' => $item->product->category->name,
+                ] : null,
+            ] : null,
+            'product_variant' => $item->productVariant ? [
+                'id' => $item->productVariant->id,
+                'name' => $item->productVariant->name,
+                'sku' => $item->productVariant->sku,
+                'size' => $item->productVariant->size,
+                'color' => $item->productVariant->color,
+                'image_url' => $item->productVariant->imageUrl(),
+                'rental_price' => $item->productVariant->rental_price,
+            ] : null,
+        ];
+    }
+
+    /**
+     * @return array{id: string, name: string, variant_name: string|null, image_url: string|null, quantity: int, is_optional: bool}
+     */
+    private function packageItemPreviewPayload(RentalPackageItem $item): array
+    {
+        return [
+            'id' => $item->id,
+            'name' => $item->product?->name ?? 'Produk paket',
+            'variant_name' => $item->productVariant?->name,
+            'image_url' => $item->productVariant?->imageUrl() ?: $item->product?->imageUrl(),
+            'quantity' => $item->quantity,
+            'is_optional' => $item->is_optional,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, RentalPackageItem>  $items
+     */
+    private function packageImageUrl(Collection $items): ?string
+    {
+        return $items
+            ->map(fn (RentalPackageItem $item): ?string => $item->productVariant?->imageUrl() ?: $item->product?->imageUrl())
+            ->first(fn (?string $imageUrl): bool => filled($imageUrl));
     }
 }

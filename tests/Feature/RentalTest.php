@@ -50,9 +50,10 @@ class RentalTest extends TestCase
         $matchingRental = Rental::factory()->create([
             'customer_id' => $budi->id,
             'invoice_number' => 'INV-20260613-0001',
-            'status' => 'booked',
+            'status' => 'returned',
             'payment_status' => 'dp',
             'pickup_at' => '2026-06-20 10:00:00',
+            'returned_at' => '2026-06-24 15:00:00',
         ]);
         Rental::factory()->create([
             'customer_id' => $sari->id,
@@ -60,15 +61,17 @@ class RentalTest extends TestCase
             'status' => 'completed',
             'payment_status' => 'paid',
             'pickup_at' => '2026-06-21 10:00:00',
+            'returned_at' => '2026-06-25 15:00:00',
         ]);
 
         $this->actingAs($this->user)
             ->get(route('rentals.index', [
                 'search' => 'Budi',
-                'status' => 'booked',
+                'status' => 'returned',
                 'payment_status' => 'dp',
-                'pickup_from' => '2026-06-20',
-                'pickup_to' => '2026-06-20',
+                'date_field' => 'returned_at',
+                'date_from' => '2026-06-24',
+                'date_to' => '2026-06-24',
             ]))
             ->assertOk()
             ->assertSee('INV-20260613-0001')

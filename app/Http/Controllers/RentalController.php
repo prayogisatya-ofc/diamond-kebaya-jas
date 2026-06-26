@@ -27,12 +27,17 @@ class RentalController extends Controller
 
     public function index(Request $request): Response
     {
+        $dateField = $this->dateFilterField($request->string('date_field')->trim()->toString());
+        $dateFrom = $request->string('date_from')->trim()->toString() ?: $request->string('pickup_from')->trim()->toString();
+        $dateTo = $request->string('date_to')->trim()->toString() ?: $request->string('pickup_to')->trim()->toString();
+
         $filters = [
             'search' => $request->string('search')->trim()->toString(),
             'status' => $request->string('status')->trim()->toString(),
             'payment_status' => $request->string('payment_status')->trim()->toString(),
-            'pickup_from' => $request->string('pickup_from')->trim()->toString(),
-            'pickup_to' => $request->string('pickup_to')->trim()->toString(),
+            'date_field' => $dateField,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
         ];
 
         $rentals = Rental::query()
@@ -48,8 +53,8 @@ class RentalController extends Controller
             })
             ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
             ->when($filters['payment_status'] !== '', fn ($query) => $query->where('payment_status', $filters['payment_status']))
-            ->when($filters['pickup_from'] !== '', fn ($query) => $query->whereDate('pickup_at', '>=', $filters['pickup_from']))
-            ->when($filters['pickup_to'] !== '', fn ($query) => $query->whereDate('pickup_at', '<=', $filters['pickup_to']))
+            ->when($filters['date_from'] !== '', fn ($query) => $query->whereDate($filters['date_field'], '>=', $filters['date_from']))
+            ->when($filters['date_to'] !== '', fn ($query) => $query->whereDate($filters['date_field'], '<=', $filters['date_to']))
             ->latest()
             ->paginate(15)
             ->withQueryString()
@@ -59,6 +64,13 @@ class RentalController extends Controller
             'rentals' => $rentals,
             'filters' => $filters,
         ]);
+    }
+
+    private function dateFilterField(string $field): string
+    {
+        return in_array($field, ['created_at', 'pickup_at', 'return_due_at', 'returned_at'], true)
+            ? $field
+            : 'pickup_at';
     }
 
     public function create(): Response
@@ -139,11 +151,11 @@ class RentalController extends Controller
         return Inertia::render('Rentals/Show', [
             'rental' => $this->rentalPayload($rental),
             'items' => $rental->items
-                ->sortBy('id')
+                ->sortByDesc('created_at')
                 ->values()
                 ->map(fn (RentalItem $item): array => $this->rentalItemPayload($item)),
             'payments' => $rental->payments
-                ->sortByDesc('paid_at')
+                ->sortByDesc('created_at')
                 ->values()
                 ->map(fn (RentalPayment $payment): array => $this->paymentPayload($payment)),
             'products' => $this->productOptions($rental->pickup_at, $rental->return_due_at),
@@ -331,7 +343,7 @@ class RentalController extends Controller
                 'name' => $rentalPackage->name,
                 'package_price' => $rentalPackage->package_price,
                 'items' => $rentalPackage->items
-                    ->sortBy('id')
+                    ->sortByDesc('created_at')
                     ->values()
                     ->map(fn (RentalPackageItem $item): array => [
                         'rental_package_id' => $rentalPackage->id,

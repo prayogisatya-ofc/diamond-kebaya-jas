@@ -1,28 +1,21 @@
 <script setup>
-import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { Head, Link, usePage } from '@inertiajs/vue3'
 import {
     AlertTriangle,
     ArrowRight,
     Banknote,
-    Bell,
     CalendarCheck,
     CalendarClock,
-    ChevronLeft,
-    ChevronRight,
     Clock3,
     CreditCard,
     FileText,
     HandCoins,
-    LogOut,
     PackageCheck,
     Plus,
-    Settings,
     ReceiptText,
-    Sparkles,
     TrendingUp,
-    UserRound,
 } from '@lucide/vue'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import {
     BarElement,
     CategoryScale,
@@ -34,14 +27,13 @@ import {
     PointElement,
     Tooltip,
 } from 'chart.js'
-import { Bar, Line } from 'vue-chartjs'
+import { Bar } from 'vue-chartjs'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Badge from '@/Components/Badge.vue'
 import Button from '@/Components/Button.vue'
 import Card from '@/Components/Card.vue'
 import EmptyState from '@/Components/EmptyState.vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
-import { useConfirm } from '@/Composables/useConfirm'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler, Tooltip, Legend)
 
@@ -79,28 +71,6 @@ const props = defineProps({
 const page = usePage()
 const user = computed(() => page.props.auth.user)
 const store = computed(() => page.props.store || {})
-const profileMenuOpen = ref(false)
-const { confirmAction } = useConfirm()
-
-async function confirmLogout() {
-    const confirmed = await confirmAction({
-        title: 'Keluar dari aplikasi?',
-        message: 'Sesi kamu akan ditutup dan perlu login lagi untuk masuk.',
-        confirmLabel: 'Ya, keluar',
-        tone: 'logout',
-    })
-
-    if (!confirmed) {
-        return
-    }
-
-    profileMenuOpen.value = false
-
-    router.post(route('logout'))
-}
-const calendarMonth = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1))
-
-const revenueMax = computed(() => Math.max(...props.dailyRevenue.map((day) => Number(day.total || 0)), 1))
 const primaryColor = computed(() => {
     const color = String(store.value.primary_color || '')
 
@@ -109,7 +79,6 @@ const primaryColor = computed(() => {
 const primaryDarkColor = computed(() => mixColor(primaryColor.value, '#000000', 0.18))
 const primarySoftColor = computed(() => mixColor(primaryColor.value, '#ffffff', 0.88))
 const primaryMutedColor = computed(() => mixColor(primaryColor.value, '#ffffff', 0.56))
-const primaryTransparentColor = computed(() => rgbaColor(primaryColor.value, 0.18))
 
 const todayLabel = computed(() => new Intl.DateTimeFormat('id-ID', {
     weekday: 'long',
@@ -128,45 +97,6 @@ const summaryCards = computed(() => [
     { label: 'Transaksi aktif', value: props.summary.active_transactions, type: 'number', icon: PackageCheck, tone: 'primary' },
     { label: 'Terlambat kembali', value: props.summary.overdue_count, type: 'number', icon: Clock3, tone: 'danger' },
 ])
-
-const userInitials = computed(() => {
-    const names = (user.value?.name || 'User')
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-
-    return names.map((name) => name.charAt(0).toUpperCase()).join('')
-})
-
-const monthLabel = computed(() => new Intl.DateTimeFormat('id-ID', {
-    month: 'long',
-    year: 'numeric',
-}).format(calendarMonth.value))
-
-const weekdayLabels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
-
-const monthCalendarDays = computed(() => {
-    const year = calendarMonth.value.getFullYear()
-    const month = calendarMonth.value.getMonth()
-    const firstDay = new Date(year, month, 1)
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const mondayOffset = (firstDay.getDay() + 6) % 7
-    const days = []
-
-    for (let index = 0; index < mondayOffset; index += 1) {
-        days.push(null)
-    }
-
-    for (let day = 1; day <= daysInMonth; day += 1) {
-        days.push(new Date(year, month, day))
-    }
-
-    while (days.length % 7 !== 0) {
-        days.push(null)
-    }
-
-    return days
-})
 
 const greeting = computed(() => {
     const hour = new Date().getHours()
@@ -262,71 +192,6 @@ const revenueChartOptions = computed(() => ({
     },
 }))
 
-const asideRevenueChartData = computed(() => ({
-    labels: props.dailyRevenue.map((day) => formatDay(day.date).split(',')[0]),
-    datasets: [
-        {
-            label: 'Pendapatan',
-            data: props.dailyRevenue.map((day) => Number(day.total || 0)),
-            borderColor: '#ffffff',
-            backgroundColor: primaryTransparentColor.value,
-            pointBackgroundColor: primarySoftColor.value,
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            tension: 0.42,
-            fill: true,
-        },
-    ],
-}))
-
-const asideRevenueChartOptions = computed(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-        intersect: false,
-        mode: 'index',
-    },
-    plugins: {
-        legend: {
-            display: false,
-        },
-        tooltip: {
-            backgroundColor: '#1f2937',
-            displayColors: false,
-            padding: 10,
-            cornerRadius: 12,
-            callbacks: {
-                label(context) {
-                    return formatMoney(context.parsed.y)
-                },
-            },
-        },
-    },
-    scales: {
-        x: {
-            grid: {
-                display: false,
-            },
-            border: {
-                display: false,
-            },
-            ticks: {
-                color: 'rgba(255,255,255,0.72)',
-                font: {
-                    size: 10,
-                    weight: 700,
-                },
-            },
-        },
-        y: {
-            display: false,
-            beginAtZero: true,
-        },
-    },
-}))
-
 const scheduleGroups = computed(() => [
     {
         title: 'Ambil hari ini',
@@ -387,26 +252,6 @@ function cardValue(card) {
     return card.type === 'money' ? formatMoney(card.value) : Number(card.value ?? 0)
 }
 
-function previousMonth() {
-    calendarMonth.value = new Date(calendarMonth.value.getFullYear(), calendarMonth.value.getMonth() - 1, 1)
-}
-
-function nextMonth() {
-    calendarMonth.value = new Date(calendarMonth.value.getFullYear(), calendarMonth.value.getMonth() + 1, 1)
-}
-
-function isToday(day) {
-    if (!day) {
-        return false
-    }
-
-    const today = new Date()
-
-    return day.getFullYear() === today.getFullYear()
-        && day.getMonth() === today.getMonth()
-        && day.getDate() === today.getDate()
-}
-
 function normalizedHex(color) {
     const value = String(color || '').replace('#', '')
 
@@ -444,12 +289,6 @@ function mixColor(color, targetColor, targetWeight) {
     return `#${toHex(base.r * baseWeight + target.r * targetWeight)}${toHex(base.g * baseWeight + target.g * targetWeight)}${toHex(base.b * baseWeight + target.b * targetWeight)}`
 }
 
-function rgbaColor(color, alpha) {
-    const rgb = hexToRgb(color)
-
-    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
-}
-
 function iconBoxClass(tone) {
     return {
         primary: 'bg-diamond-primary-soft text-diamond-primary',
@@ -465,9 +304,8 @@ function iconBoxClass(tone) {
 <template>
     <Head title="Dashboard" />
 
-    <div class="grid gap-7 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div class="grid gap-7">
-            <section class="overflow-hidden rounded-[2rem] border border-white/80 bg-white p-6 sm:p-7">
+    <div class="grid gap-7">
+        <section class="overflow-hidden rounded-[2rem] border border-white/80 bg-white p-6 sm:p-7">
                 <div class="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
                     <div class="min-w-0">
                         <div class="flex items-center gap-2 text-xs font-bold uppercase text-diamond-accent">
@@ -508,7 +346,7 @@ function iconBoxClass(tone) {
                 </div>
             </section>
 
-            <Card class="xl:hidden">
+            <Card>
                 <div class="flex items-start justify-between gap-4">
                     <div>
                         <p class="text-xs font-bold uppercase tracking-[0.18em] text-diamond-accent">Jadwal hari ini</p>
@@ -663,149 +501,5 @@ function iconBoxClass(tone) {
                     </table>
                 </div>
             </Card>
-        </div>
-
-        <aside class="hidden xl:block">
-            <div class="sticky top-7 min-h-[calc(100vh-3.5rem)] rounded-[2.25rem] bg-white/90 p-6 backdrop-blur">
-                <div class="flex items-center justify-between gap-4">
-                    <div class="flex items-center gap-3">
-                        <Link
-                            :href="route('settings.edit')"
-                            class="flex h-10 w-10 items-center justify-center rounded-2xl bg-diamond-surface-soft text-diamond-muted transition hover:bg-diamond-primary-soft hover:text-diamond-primary"
-                            aria-label="Setting"
-                        >
-                            <Settings :size="18" />
-                        </Link>
-                    </div>
-                    <div class="relative">
-                        <button
-                            class="flex items-center gap-3 rounded-2xl px-2 py-1.5 text-left transition hover:bg-diamond-surface-soft"
-                            type="button"
-                            aria-haspopup="menu"
-                            :aria-expanded="profileMenuOpen"
-                            @click="profileMenuOpen = !profileMenuOpen"
-                        >
-                            <div class="min-w-0 text-right">
-                                <p class="max-w-32 truncate text-sm font-bold text-diamond-text">{{ user.name }}</p>
-                                <p class="truncate text-xs capitalize text-diamond-muted">{{ user.role }}</p>
-                            </div>
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-diamond-primary text-sm font-bold text-white">
-                                {{ userInitials }}
-                            </div>
-                        </button>
-
-                        <div
-                            v-if="profileMenuOpen"
-                            class="absolute right-0 top-14 z-20 w-52 rounded-3xl border border-diamond-border bg-white p-2"
-                            role="menu"
-                        >
-                            <Link
-                                :href="route('profile.edit')"
-                                class="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-diamond-text transition hover:bg-diamond-surface-soft"
-                                type="button"
-                                role="menuitem"
-                            >
-                                <UserRound :size="17" />
-                                Profil
-                            </Link>
-                            <button
-                                class="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-                                type="button"
-                                role="menuitem"
-                                @click="confirmLogout"
-                            >
-                                <LogOut :size="17" />
-                                Logout
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <section class="mt-8">
-                    <div class="flex items-center justify-between gap-3">
-                        <h2 class="text-base font-bold text-diamond-text">Kalender</h2>
-                        <div class="flex items-center gap-1">
-                            <button
-                                class="flex h-8 w-8 items-center justify-center rounded-xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-primary"
-                                type="button"
-                                aria-label="Bulan sebelumnya"
-                                @click="previousMonth"
-                            >
-                                <ChevronLeft :size="17" />
-                            </button>
-                            <button
-                                class="flex h-8 w-8 items-center justify-center rounded-xl text-diamond-muted transition hover:bg-diamond-surface-soft hover:text-diamond-primary"
-                                type="button"
-                                aria-label="Bulan berikutnya"
-                                @click="nextMonth"
-                            >
-                                <ChevronRight :size="17" />
-                            </button>
-                        </div>
-                    </div>
-                    <div class="mt-4 rounded-3xl bg-diamond-surface-soft p-4">
-                        <div class="flex items-center justify-between gap-2">
-                            <p class="text-sm font-bold capitalize text-diamond-text">{{ monthLabel }}</p>
-                        </div>
-                        <div class="mt-4 grid grid-cols-7 gap-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-diamond-soft">
-                            <span v-for="label in weekdayLabels" :key="label">{{ label }}</span>
-                        </div>
-                        <div class="mt-2 grid grid-cols-7 gap-1.5">
-                            <div
-                                v-for="(day, index) in monthCalendarDays"
-                                :key="day ? day.toISOString() : `blank-${index}`"
-                                class="flex h-9 items-center justify-center rounded-2xl text-center text-sm font-bold"
-                                :class="[
-                                    !day ? 'text-transparent' : '',
-                                    day && isToday(day) ? 'bg-diamond-accent text-white' : 'bg-white text-diamond-muted',
-                                ]"
-                            >
-                                {{ day ? day.getDate() : 0 }}
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="mt-8">
-                    <div class="flex items-center justify-between gap-3">
-                        <h2 class="text-base font-bold text-diamond-text">Grafik pendapatan</h2>
-                        <span class="text-xs font-semibold text-diamond-soft">7 hari</span>
-                    </div>
-                    <div class="mt-4 rounded-[2rem] bg-diamond-primary p-5 text-white">
-                        <div class="h-44">
-                            <Line :data="asideRevenueChartData" :options="asideRevenueChartOptions" />
-                        </div>
-                    </div>
-                </section>
-
-                <section class="mt-8">
-                    <div class="flex items-center justify-between gap-3">
-                        <h2 class="text-base font-bold text-diamond-text">Jadwal dekat</h2>
-                    </div>
-                    <div class="mt-4 grid gap-3">
-                        <template v-for="group in scheduleGroups" :key="group.title">
-                            <Link
-                                v-for="rental in group.items.slice(0, 1)"
-                                :key="`${group.title}-${rental.id}`"
-                                :href="route('rentals.show', rental.id)"
-                                class="rounded-2xl border border-diamond-border bg-diamond-surface-soft p-4 transition hover:border-diamond-primary/40 hover:bg-white"
-                            >
-                                <div class="flex items-center justify-between gap-3">
-                                    <p class="truncate text-sm font-bold text-diamond-text">{{ rental.invoice_number }}</p>
-                                    <Badge :tone="group.tone">{{ group.title }}</Badge>
-                                </div>
-                                <p class="mt-2 truncate text-sm text-diamond-muted">{{ rental.customer_name || '-' }}</p>
-                                <p class="mt-1 text-xs text-diamond-soft">{{ formatDate(rental[group.field]) }}</p>
-                            </Link>
-                        </template>
-                        <EmptyState
-                            v-if="[...pickupToday, ...returnToday, ...overdueRentals].length === 0"
-                            title="Tidak ada jadwal mendesak."
-                            description="Pickup, return, dan overdue akan muncul di sini."
-                        />
-                    </div>
-                </section>
-            </div>
-        </aside>
     </div>
 </template>

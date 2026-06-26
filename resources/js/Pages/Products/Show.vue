@@ -52,6 +52,20 @@ async function destroyVariant(variant) {
         preserveScroll: true,
     })
 }
+
+async function destroyProduct() {
+    const confirmed = await confirmAction({
+        title: 'Hapus produk?',
+        message: `Produk ${props.product.name} dan varian produknya akan dihapus.`,
+        confirmLabel: 'Ya, hapus produk',
+    })
+
+    if (!confirmed) {
+        return
+    }
+
+    router.delete(route('products.destroy', props.product.id))
+}
 </script>
 
 <template>
@@ -70,6 +84,10 @@ async function destroyVariant(variant) {
                 <Button :href="route('products.edit', product.id)" variant="secondary">
                     <Pencil :size="18" />
                     Edit produk
+                </Button>
+                <Button variant="danger" type="button" @click="destroyProduct">
+                    <Trash2 :size="18" />
+                    Hapus produk
                 </Button>
                 <Button :href="route('products.variants.create', product.id)">
                     <PackagePlus :size="18" />
@@ -120,7 +138,7 @@ async function destroyVariant(variant) {
                 <p class="mt-1 text-sm text-diamond-muted">Stok dan harga opsional per varian.</p>
             </div>
 
-            <div class="grid gap-3 md:hidden">
+            <div class="grid gap-3 lg:hidden">
                 <Link
                     v-for="variant in variants"
                     :key="variant.id"
@@ -154,7 +172,7 @@ async function destroyVariant(variant) {
                 <EmptyState v-if="variants.length === 0" title="Belum ada varian produk." description="Tambahkan ukuran, warna, stok, dan harga khusus jika dibutuhkan." />
             </div>
 
-            <div class="hidden overflow-hidden rounded-[2rem] border border-white/80 bg-white md:block">
+            <div class="hidden overflow-hidden rounded-[2rem] border border-white/80 bg-white lg:block">
                 <table class="w-full min-w-[880px] text-left text-sm">
                     <thead class="border-b border-diamond-border bg-diamond-surface-soft text-xs uppercase tracking-wide text-diamond-muted">
                         <tr>

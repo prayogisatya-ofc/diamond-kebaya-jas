@@ -132,7 +132,7 @@ async function destroyCustomer(customer) {
             </div>
         </form>
 
-        <div class="grid gap-3 md:hidden">
+        <div class="grid gap-3 lg:hidden">
             <article
                 v-for="customer in customers.data"
                 :key="customer.id"
@@ -184,7 +184,7 @@ async function destroyCustomer(customer) {
             <EmptyState v-if="customers.data.length === 0" title="Belum ada customer." description="Tambahkan customer ketika pesanan rental sudah yakin." />
         </div>
 
-        <div class="hidden overflow-hidden rounded-[2rem] border border-white/80 bg-white md:block">
+        <div class="hidden overflow-hidden rounded-[2rem] border border-white/80 bg-white lg:block">
             <table class="w-full min-w-[980px] text-left text-sm">
                 <thead class="border-b border-diamond-border bg-diamond-surface-soft text-xs uppercase tracking-wide text-diamond-muted">
                     <tr>
@@ -221,21 +221,14 @@ async function destroyCustomer(customer) {
                         <td class="px-4 py-4 text-diamond-muted">{{ formatDate(customer.last_transaction_at) }}</td>
                         <td class="px-6 py-4">
                             <div class="flex justify-end gap-2">
-                                <Link
-                                    :href="route('customers.edit', customer.id)"
-                                    class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-diamond-border px-3 py-2 text-sm font-semibold text-diamond-text transition hover:bg-diamond-surface-soft"
-                                >
+                                <Button :href="route('customers.edit', customer.id)" variant="secondary">
                                     <Pencil :size="15" />
                                     Edit
-                                </Link>
-                                <button
-                                    class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50"
-                                    type="button"
-                                    @click="destroyCustomer(customer)"
-                                >
+                                </Button>
+                                <Button variant="danger" type="button" @click="destroyCustomer(customer)">
                                     <Trash2 :size="15" />
                                     Hapus
-                                </button>
+                                </Button>
                             </div>
                         </td>
                     </tr>

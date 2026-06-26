@@ -2,7 +2,7 @@
     "name": "Diamond Kebaya & Jas",
     "short_name": "Diamond App",
     "description": "Rental Management POS untuk Diamond Kebaya & Jas.",
-    "start_url": "/dashboard",
+    "start_url": "/panel/dashboard",
     "scope": "/",
     "display": "standalone",
     "orientation": "portrait",
@@ -21,13 +21,13 @@
         {
             "name": "Buat Rental",
             "short_name": "Rental",
-            "url": "/rentals/create",
+            "url": "/panel/rentals/create",
             "description": "Buat transaksi rental baru."
         },
         {
             "name": "Data Produk",
             "short_name": "Produk",
-            "url": "/products",
+            "url": "/panel/products",
             "description": "Buka master data produk."
         }
     ]

@@ -74,7 +74,7 @@ class ReportController extends Controller
             ->when($filters['payment_type'], fn ($query, string $type) => $query->where('payment_type', $type))
             ->when($filters['payment_method'], fn ($query, string $method) => $query->where('payment_method', $method))
             ->when($filters['staff_id'], fn ($query, string $staffId) => $query->where('created_by', $staffId))
-            ->latest('paid_at')
+            ->latest()
             ->paginate(15)
             ->withQueryString()
             ->through(fn (RentalPayment $payment): array => [
@@ -114,9 +114,9 @@ class ReportController extends Controller
                     ->when($filters['date_from'], fn ($query, string $date) => $query->whereDate('created_at', '>=', $date))
                     ->when($filters['date_to'], fn ($query, string $date) => $query->whereDate('created_at', '<=', $date));
             })
-            ->selectRaw('MIN(id) as id, product_id, product_variant_id, item_name_snapshot, variant_name_snapshot, SUM(quantity) as total_quantity, SUM(final_price) as total_revenue')
+            ->selectRaw('MIN(id) as id, MAX(created_at) as latest_created_at, product_id, product_variant_id, item_name_snapshot, variant_name_snapshot, SUM(quantity) as total_quantity, SUM(final_price) as total_revenue')
             ->groupBy('product_id', 'product_variant_id', 'item_name_snapshot', 'variant_name_snapshot')
-            ->orderByDesc('total_quantity')
+            ->orderByDesc('latest_created_at')
             ->paginate(15)
             ->withQueryString()
             ->through(fn (RentalItem $item): array => [

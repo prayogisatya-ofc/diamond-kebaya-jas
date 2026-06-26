@@ -28,12 +28,12 @@ class RentalInvoiceController extends Controller
             'store' => $this->storePayload(),
             'rental' => $this->rentalPayload($rental),
             'items' => $rental->items
-                ->sortBy('id')
+                ->sortByDesc('created_at')
                 ->values()
                 ->map(fn (RentalItem $item): array => $this->itemPayload($item))
                 ->all(),
             'payments' => $rental->payments
-                ->sortBy('paid_at')
+                ->sortByDesc('created_at')
                 ->values()
                 ->map(fn (RentalPayment $payment): array => $this->paymentPayload($payment))
                 ->all(),

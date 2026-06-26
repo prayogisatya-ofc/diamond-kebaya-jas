@@ -1,32 +1,29 @@
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3'
 import {
-    BarChart3,
     CalendarDays,
-    Home,
+    ChevronLeft,
     LogOut,
     Menu,
-    Package,
-    Settings,
-    ShoppingBag,
-    Tag,
-    UserRound,
-    Users,
+    PanelLeftClose,
+    PanelLeftOpen,
     X,
 } from '@lucide/vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import Breadcrumb from '@/Components/Breadcrumb.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import GlobalToast from '@/Components/GlobalToast.vue'
+import UserMenu from '@/Components/UserMenu.vue'
 import { useConfirm } from '@/Composables/useConfirm'
+import { useNavigation } from '@/Composables/useNavigation'
+import { useSidebar } from '@/Composables/useSidebar'
 
 const page = usePage()
 const drawerOpen = ref(false)
-const profileMenuOpen = ref(false)
-const profileMenuRoot = ref(null)
 const { confirmAction } = useConfirm()
+const { navigation, breadcrumbs, isActive } = useNavigation()
+const { collapsed, toggleCollapsed } = useSidebar()
 
-const user = computed(() => page.props.auth.user)
-const isOwner = computed(() => user.value?.role === 'owner')
 const store = computed(() => page.props.store || {})
 const primaryColor = computed(() => {
     const color = String(store.value.primary_color || '')
@@ -41,6 +38,12 @@ const themeStyle = computed(() => ({
     '--color-diamond-sidebar': primaryColor.value,
 }))
 
+const currentTitle = computed(() => {
+    const trail = breadcrumbs.value
+
+    return trail[trail.length - 1]?.label || 'Dashboard'
+})
+
 function applyThemeVariables(style) {
     if (typeof document === 'undefined') {
         return
@@ -51,60 +54,8 @@ function applyThemeVariables(style) {
     })
 }
 
-const navigation = computed(() => {
-    const items = [
-        { label: 'Dashboard', route: 'dashboard', icon: Home },
-        { label: 'Rental', route: 'rentals.index', icon: ShoppingBag },
-        { label: 'Produk', route: 'products.index', icon: Package },
-        { label: 'Paket', route: 'rental-packages.index', icon: Tag },
-        { label: 'Customer', route: 'customers.index', icon: Users },
-        { label: 'Laporan', route: 'reports.transactions', icon: BarChart3 },
-    ]
-
-    if (isOwner.value) {
-        items.push(
-            { label: 'User', route: 'users.index', icon: Users },
-            { label: 'Setting', route: 'settings.edit', icon: Settings },
-        )
-    }
-
-    return items
-})
-
-function isActive(item) {
-    if (item.route === 'dashboard') {
-        return route().current('dashboard')
-    }
-
-    const prefix = item.route.split('.')[0]
-
-    return route().current(`${prefix}.*`)
-}
-
 function closeDrawer() {
     drawerOpen.value = false
-}
-
-const userInitials = computed(() => {
-    return String(user.value?.name || '?')
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0])
-        .join('')
-        .toUpperCase()
-})
-
-function closeProfileMenuWhenClickOutside(event) {
-    if (!profileMenuRoot.value || profileMenuRoot.value.contains(event.target)) {
-        return
-    }
-
-    profileMenuOpen.value = false
-}
-
-function toggleProfileMenu() {
-    profileMenuOpen.value = !profileMenuOpen.value
 }
 
 async function confirmLogout() {
@@ -120,71 +71,107 @@ async function confirmLogout() {
     }
 
     drawerOpen.value = false
-    profileMenuOpen.value = false
-
     router.post(route('logout'))
 }
 
-onMounted(() => {
-    applyThemeVariables(themeStyle.value)
-    document.addEventListener('pointerdown', closeProfileMenuWhenClickOutside)
-})
-
+onMounted(() => applyThemeVariables(themeStyle.value))
 watch(themeStyle, (style) => applyThemeVariables(style), { immediate: true })
-
-onBeforeUnmount(() => {
-    document.removeEventListener('pointerdown', closeProfileMenuWhenClickOutside)
-})
 </script>
 
 <template>
     <div class="min-h-screen min-w-0 overflow-x-hidden bg-diamond-bg text-diamond-text" :style="themeStyle">
-        <aside class="fixed inset-y-0 left-0 z-40 hidden w-24 lg:block">
-            <div class="flex h-full flex-col items-center rounded-r-[2.25rem] bg-diamond-sidebar px-3 py-7">
-                <Link :href="route('dashboard')" class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-white text-diamond-primary">
-                    <img
-                        v-if="store.logo_url"
-                        :alt="store.name || 'Logo toko'"
-                        class="h-12 w-12 object-contain"
-                        :src="store.logo_url"
+        <!-- Sidebar desktop: collapsible berlabel -->
+        <aside
+            class="fixed inset-y-0 left-0 z-40 hidden p-3 transition-[width] duration-200 ease-out lg:block"
+            :class="collapsed ? 'w-[5.5rem]' : 'w-64'"
+        >
+            <div class="flex h-full flex-col rounded-[2rem] bg-diamond-sidebar text-white">
+                <div class="flex items-center gap-3 px-4 py-5" :class="collapsed ? 'justify-center px-0' : ''">
+                    <Link
+                        :href="route('dashboard')"
+                        class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white text-diamond-primary"
                     >
-                    <CalendarDays v-else :size="24" />
-                </Link>
+                        <img
+                            v-if="store.logo_url"
+                            :alt="store.name || 'Logo toko'"
+                            class="h-11 w-11 object-contain"
+                            :src="store.logo_url"
+                        >
+                        <CalendarDays v-else :size="22" />
+                    </Link>
+                    <div v-if="!collapsed" class="min-w-0">
+                        <p class="truncate text-sm font-bold leading-tight">{{ store.name || 'Diamond Kebaya & Jas' }}</p>
+                        <p class="truncate text-[11px] leading-tight text-white/70">Rental Management</p>
+                    </div>
+                </div>
 
-                <nav class="mt-10 flex flex-1 flex-col items-center gap-3">
+                <nav class="flex flex-1 flex-col gap-1.5 overflow-y-auto px-3 py-2">
                     <Link
                         v-for="item in navigation"
                         :key="item.route"
                         :href="route(item.route)"
-                        class="group relative flex h-12 w-12 items-center justify-center rounded-2xl transition"
-                        :class="isActive(item) ? 'bg-white text-diamond-primary' : 'text-white/80 hover:bg-white/15 hover:text-white'"
-                        :title="item.label"
+                        class="group relative flex min-h-11 items-center rounded-2xl text-sm font-semibold transition"
+                        :class="[
+                            collapsed ? 'justify-center px-0' : 'gap-3 px-3.5',
+                            isActive(item) ? 'bg-white text-diamond-primary' : 'text-white/80 hover:bg-white/15 hover:text-white',
+                        ]"
+                        :title="collapsed ? item.label : undefined"
                     >
-                        <component :is="item.icon" :size="21" />
-                        <span class="pointer-events-none absolute left-14 hidden rounded-xl bg-diamond-text px-3 py-2 text-xs font-semibold text-white group-hover:block">
+                        <component :is="item.icon" class="shrink-0" :size="20" />
+                        <span v-if="!collapsed" class="truncate">{{ item.label }}</span>
+                        <span
+                            v-if="collapsed"
+                            class="pointer-events-none absolute left-[calc(100%+0.75rem)] z-50 hidden whitespace-nowrap rounded-xl bg-diamond-text px-3 py-2 text-xs font-semibold text-white group-hover:block"
+                        >
                             {{ item.label }}
                         </span>
                     </Link>
                 </nav>
 
-                <button
-                    class="flex h-12 w-12 items-center justify-center rounded-2xl text-white/80 transition hover:bg-white/15 hover:text-white"
-                    type="button"
-                    title="Keluar"
-                    @click="confirmLogout"
-                >
-                    <LogOut :size="21" />
-                </button>
+                <div class="grid gap-1.5 px-3 pb-4 pt-2">
+                    <button
+                        class="flex min-h-11 items-center rounded-2xl text-sm font-semibold text-white/80 transition hover:bg-white/15 hover:text-white"
+                        :class="collapsed ? 'justify-center px-0' : 'gap-3 px-3.5'"
+                        type="button"
+                        :title="collapsed ? 'Keluar' : undefined"
+                        @click="confirmLogout"
+                    >
+                        <LogOut class="shrink-0" :size="20" />
+                        <span v-if="!collapsed">Keluar</span>
+                    </button>
+                    <button
+                        class="flex min-h-11 items-center rounded-2xl text-sm font-semibold text-white/70 transition hover:bg-white/15 hover:text-white"
+                        :class="collapsed ? 'justify-center px-0' : 'gap-3 px-3.5'"
+                        type="button"
+                        :title="collapsed ? 'Lebarkan menu' : 'Ciutkan menu'"
+                        @click="toggleCollapsed"
+                    >
+                        <component :is="collapsed ? PanelLeftOpen : PanelLeftClose" class="shrink-0" :size="20" />
+                        <span v-if="!collapsed">Ciutkan menu</span>
+                    </button>
+                </div>
             </div>
         </aside>
 
+        <!-- Drawer mobile -->
         <div v-if="drawerOpen" class="fixed inset-0 z-50 lg:hidden">
-            <button class="absolute inset-0 bg-slate-950/35" type="button" aria-label="Tutup menu" @click="closeDrawer" />
-            <aside class="relative flex h-full w-[min(300px,84vw)] flex-col rounded-r-[1.75rem] bg-diamond-primary p-4 text-white">
+            <button class="absolute inset-0 bg-slate-950/40" type="button" aria-label="Tutup menu" @click="closeDrawer" />
+            <aside class="relative flex h-full w-[min(300px,84vw)] flex-col bg-diamond-sidebar p-4 text-white">
                 <div class="flex items-center justify-between gap-3">
-                    <div>
-                        <p class="text-xs font-bold">Diamond Kebaya & Jas</p>
-                        <p class="text-[11px] text-white/70">Rental Management POS</p>
+                    <div class="flex items-center gap-2.5">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white text-diamond-primary">
+                            <img
+                                v-if="store.logo_url"
+                                :alt="store.name || 'Logo toko'"
+                                class="h-10 w-10 object-contain"
+                                :src="store.logo_url"
+                            >
+                            <CalendarDays v-else :size="20" />
+                        </span>
+                        <div class="min-w-0">
+                            <p class="truncate text-xs font-bold">{{ store.name || 'Diamond Kebaya & Jas' }}</p>
+                            <p class="truncate text-[11px] text-white/70">Rental Management</p>
+                        </div>
                     </div>
                     <button class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15" type="button" @click="closeDrawer">
                         <X :size="20" />
@@ -196,100 +183,51 @@ onBeforeUnmount(() => {
                         v-for="item in navigation"
                         :key="item.route"
                         :href="route(item.route)"
-                        class="flex min-h-10 items-center gap-2.5 rounded-2xl px-3 py-2 text-xs font-semibold transition"
+                        class="flex min-h-11 items-center gap-3 rounded-2xl px-3.5 py-2 text-sm font-semibold transition"
                         :class="isActive(item) ? 'bg-white text-diamond-primary' : 'text-white/85 hover:bg-white/15'"
                         @click="closeDrawer"
                     >
-                        <component :is="item.icon" :size="18" />
+                        <component :is="item.icon" :size="19" />
                         {{ item.label }}
                     </Link>
                 </nav>
 
-                <div class="mt-auto rounded-3xl bg-white/12 p-3">
-                    <p class="text-xs font-semibold">{{ user.name }}</p>
-                    <p class="text-[11px] capitalize text-white/70">{{ user.role }}</p>
-                    <button class="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-2xl bg-white text-xs font-semibold text-diamond-primary" type="button" @click="confirmLogout">
-                        <LogOut :size="16" />
-                        Keluar
-                    </button>
-                </div>
+                <button
+                    class="mt-auto flex min-h-11 items-center gap-3 rounded-2xl px-3.5 py-2 text-sm font-semibold text-white/85 transition hover:bg-white/15"
+                    type="button"
+                    @click="confirmLogout"
+                >
+                    <LogOut :size="19" />
+                    Keluar
+                </button>
             </aside>
         </div>
 
-        <div class="min-w-0 overflow-x-hidden lg:pl-24">
-            <header class="sticky top-0 z-30 border-b border-diamond-border bg-white px-3 py-2 lg:hidden">
-                <div class="grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
-                    <button class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-diamond-primary" type="button" @click="drawerOpen = true">
-                        <Menu :size="20" />
-                    </button>
-                    <Link :href="route('dashboard')" class="mx-auto flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-white text-diamond-primary">
-                        <img
-                            v-if="store.logo_url"
-                            :alt="store.name || 'Logo toko'"
-                            class="h-7 w-7 object-contain"
-                            :src="store.logo_url"
-                        >
-                        <CalendarDays v-else :size="21" />
-                    </Link>
-                    <div ref="profileMenuRoot" class="relative flex justify-end">
+        <div class="min-w-0 overflow-x-hidden transition-[padding] duration-200 ease-out" :class="collapsed ? 'lg:pl-[5.5rem]' : 'lg:pl-64'">
+            <!-- Top bar wrapper: floating pill on desktop, full-width on mobile -->
+            <div class="sticky top-0 z-30 lg:px-3 lg:pt-3">
+                <header class="border-b border-diamond-border bg-white/85 backdrop-blur lg:static lg:rounded-[2rem] lg:border lg:border-white/80">
+                    <div class="flex items-center gap-3 px-3 py-2.5 sm:px-5 lg:px-5">
                         <button
-                            v-if="user"
-                            class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-diamond-text"
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-diamond-border bg-white text-diamond-primary lg:hidden"
                             type="button"
-                            :aria-expanded="profileMenuOpen"
-                            aria-haspopup="menu"
-                            @click.stop="toggleProfileMenu"
-                            @pointerdown.stop
+                            aria-label="Buka menu"
+                            @click="drawerOpen = true"
                         >
-                            <span class="flex h-7 w-7 items-center justify-center rounded-xl bg-diamond-primary text-[11px] font-bold text-white">
-                                {{ userInitials }}
-                            </span>
+                            <Menu :size="20" />
                         </button>
 
-                        <div
-                            v-if="profileMenuOpen"
-                            class="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-60 overflow-hidden rounded-3xl border border-diamond-border bg-white"
-                            role="menu"
-                            @pointerdown.stop
-                        >
-                            <div class="border-b border-diamond-border p-3">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-diamond-primary text-xs font-bold text-white">
-                                        {{ userInitials }}
-                                    </div>
-                                    <div class="min-w-0">
-                                        <p class="truncate text-xs font-bold text-diamond-text">{{ user.name }}</p>
-                                        <p class="truncate text-[11px] capitalize text-diamond-muted">{{ user.role }}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="grid gap-1 p-1.5">
-                                <Link
-                                    :href="route('profile.edit')"
-                                    class="flex min-h-10 items-center gap-2.5 rounded-2xl px-3 py-2 text-xs font-semibold text-diamond-text transition hover:bg-diamond-surface-soft"
-                                    role="menuitem"
-                                    @click="profileMenuOpen = false"
-                                >
-                                    <UserRound :size="16" />
-                                    Profil
-                                </Link>
-                                <button
-                                    class="flex min-h-10 items-center gap-2.5 rounded-2xl px-3 py-2 text-left text-xs font-semibold text-red-600 transition hover:bg-red-50"
-                                    type="button"
-                                    role="menuitem"
-                                    @click="confirmLogout"
-                                >
-                                    <LogOut :size="16" />
-                                    Logout
-                                </button>
-                            </div>
+                        <div class="min-w-0 flex-1">
+                            <Breadcrumb :items="breadcrumbs" class="hidden sm:flex" />
+                            <p class="truncate text-sm font-bold text-diamond-text sm:hidden">{{ currentTitle }}</p>
                         </div>
-                    </div>
-                </div>
-            </header>
 
-            <main class="min-h-screen min-w-0 max-w-full overflow-x-hidden px-3 pb-5 pt-3 sm:px-6 lg:px-7 lg:pb-7 lg:pt-7 2xl:px-9 2xl:pb-9 2xl:pt-9">
+                        <UserMenu class="shrink-0" />
+                    </div>
+                </header>
+            </div>
+
+            <main class="min-h-[calc(100vh-3.75rem)] min-w-0 max-w-full overflow-x-hidden px-3 pb-5 pt-4 sm:px-6 lg:px-7 lg:pb-7 lg:pt-6 2xl:px-9">
                 <slot />
             </main>
         </div>

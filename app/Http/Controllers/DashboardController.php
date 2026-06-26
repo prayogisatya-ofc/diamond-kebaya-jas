@@ -37,9 +37,9 @@ class DashboardController extends Controller
                 'return_today_count' => $this->returnTodayQuery($startOfDay, $endOfDay)->count(),
                 'overdue_count' => $this->overdueQuery($today)->count(),
             ],
-            'pickupToday' => $this->rentalList($this->pickupTodayQuery($startOfDay, $endOfDay)->oldest('pickup_at')->limit(6)->get()),
-            'returnToday' => $this->rentalList($this->returnTodayQuery($startOfDay, $endOfDay)->oldest('return_due_at')->limit(6)->get()),
-            'overdueRentals' => $this->rentalList($this->overdueQuery($today)->oldest('return_due_at')->limit(6)->get()),
+            'pickupToday' => $this->rentalList($this->pickupTodayQuery($startOfDay, $endOfDay)->latest()->limit(6)->get()),
+            'returnToday' => $this->rentalList($this->returnTodayQuery($startOfDay, $endOfDay)->latest()->limit(6)->get()),
+            'overdueRentals' => $this->rentalList($this->overdueQuery($today)->latest()->limit(6)->get()),
             'recentRentals' => $this->rentalList(Rental::query()
                 ->with('customer:id,name,whatsapp_number')
                 ->latest()

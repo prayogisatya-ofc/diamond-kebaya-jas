@@ -363,7 +363,7 @@ function fieldError(index, field) {
             </section>
         </div>
 
-        <aside class="grid gap-4 self-start xl:sticky xl:top-8">
+        <aside class="grid gap-4 self-start xl:sticky xl:top-20">
             <section class="grid gap-4 rounded-[2rem] border border-white/80 bg-white p-5 sm:p-6">
                 <div>
                     <p class="text-sm font-bold text-diamond-muted">Ringkasan paket</p>

@@ -28,6 +28,7 @@ Route::get('sitemap.xml', [PublicSitemapController::class, 'sitemap'])->name('pu
 Route::get('robots.txt', [PublicSitemapController::class, 'robots'])->name('public.robots');
 Route::get('cara-sewa', [PublicCatalogController::class, 'howToRent'])->name('public.how-to-rent');
 Route::get('faq', [PublicCatalogController::class, 'faq'])->name('public.faq');
+Route::get('catalog/packages/{rentalPackage}', [PublicCatalogController::class, 'packageShow'])->name('public.catalog.packages.show');
 Route::get('catalog/{product}', [PublicCatalogController::class, 'show'])->name('public.catalog.show');
 Route::redirect('catalog', '/');
 Route::redirect('katalog', '/catalog');

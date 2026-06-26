@@ -1,18 +1,19 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3'
-import { CalendarClock, MessageCircle, Pencil, ReceiptText, WalletCards } from '@lucide/vue'
+import { Head, Link, router } from '@inertiajs/vue3'
+import { CalendarClock, MessageCircle, Pencil, ReceiptText, Trash2, WalletCards } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Button from '@/Components/Button.vue'
 import Card from '@/Components/Card.vue'
 import EmptyState from '@/Components/EmptyState.vue'
 import PageHeader from '@/Components/PageHeader.vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
+import { useConfirm } from '@/Composables/useConfirm'
 
 defineOptions({
     layout: AppLayout,
 })
 
-defineProps({
+const props = defineProps({
     customer: {
         type: Object,
         required: true,
@@ -26,6 +27,7 @@ defineProps({
         required: true,
     },
 })
+const { confirmAction } = useConfirm()
 
 function formatMoney(value) {
     return new Intl.NumberFormat('id-ID', {
@@ -62,6 +64,22 @@ function whatsappUrl(number) {
 
     return normalized ? `https://wa.me/${normalized}` : '#'
 }
+
+async function destroyCustomer() {
+    const confirmed = await confirmAction({
+        title: 'Hapus customer?',
+        message: `Customer ${props.customer.name} akan dihapus jika tidak memiliki data yang mengunci.`,
+        confirmLabel: 'Ya, hapus customer',
+    })
+
+    if (!confirmed) {
+        return
+    }
+
+    router.delete(route('customers.destroy', props.customer.id), {
+        preserveScroll: true,
+    })
+}
 </script>
 
 <template>
@@ -80,6 +98,10 @@ function whatsappUrl(number) {
                 <Button :href="route('customers.edit', customer.id)">
                     <Pencil :size="18" />
                     Edit customer
+                </Button>
+                <Button variant="danger" type="button" @click="destroyCustomer">
+                    <Trash2 :size="18" />
+                    Hapus customer
                 </Button>
             </template>
         </PageHeader>
@@ -136,7 +158,7 @@ function whatsappUrl(number) {
                 <p class="mt-1 text-sm text-diamond-muted">Maksimal 20 transaksi terbaru untuk customer ini.</p>
             </div>
 
-            <div class="grid gap-3 md:hidden">
+            <div class="grid gap-3 lg:hidden">
                 <Link
                     v-for="rental in rentalHistory"
                     :key="rental.id"
@@ -174,7 +196,7 @@ function whatsappUrl(number) {
                 />
             </div>
 
-            <div class="hidden overflow-hidden rounded-[2rem] border border-white/80 bg-white md:block">
+            <div class="hidden overflow-hidden rounded-[2rem] border border-white/80 bg-white lg:block">
                 <table class="w-full min-w-[980px] text-left text-sm">
                     <thead class="border-b border-diamond-border bg-diamond-surface-soft text-xs uppercase tracking-wide text-diamond-muted">
                         <tr>

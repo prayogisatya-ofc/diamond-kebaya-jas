@@ -235,15 +235,15 @@ function submit() {
                                     <input ref="logoInput" class="sr-only" accept="image/jpeg,image/png,image/webp" type="file" @change="updateLogo">
                                 </label>
 
-                                <button
+                                <Button
                                     v-if="form.logo"
-                                    class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-50 sm:w-fit lg:w-full xl:w-fit"
+                                    variant="secondary"
                                     type="button"
                                     @click="clearSelectedLogo"
                                 >
                                     <X :size="17" />
                                     Batal pilih
-                                </button>
+                                </Button>
                             </div>
 
                             <progress v-if="form.progress" class="h-2 w-full overflow-hidden rounded-full" max="100" :value="form.progress.percentage" />

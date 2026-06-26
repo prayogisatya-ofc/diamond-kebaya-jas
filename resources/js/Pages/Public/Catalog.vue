@@ -19,6 +19,10 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    packages: {
+        type: Array,
+        required: true,
+    },
     filters: {
         type: Object,
         required: true,
@@ -51,11 +55,9 @@ const form = reactive({
     sort: props.filters.sort || 'name_asc',
 })
 
-const cssVars = computed(() => ({
-    '--catalog-primary': '#6533D6',
-}))
-
 const allProducts = computed(() => props.products.data || [])
+const allPackages = computed(() => props.packages || [])
+const allCatalogItems = computed(() => sortCatalogItems([...allProducts.value, ...allPackages.value]))
 const primaryCategories = computed(() => props.categories.slice(0, 7))
 const overflowCategories = computed(() => props.categories.slice(7))
 const hasOverflowSelection = computed(() => overflowCategories.value.some((category) => category.id === form.category))
@@ -68,9 +70,9 @@ const categoryChips = computed(() => [
     ...(overflowCategories.value.length ? [{ id: '__more', name: 'Lainnya', icon: 'dots' }] : []),
 ])
 
-const filteredProducts = computed(() => {
+const filteredCatalogItems = computed(() => {
     if (!favoriteOnly.value) {
-        return allProducts.value
+        return allCatalogItems.value
     }
 
     return allProducts.value.filter((product) => favoriteIds.value.includes(product.id))
@@ -97,14 +99,14 @@ const structuredData = computed(() => ({
     name: props.catalogStore.name,
     description: seoDescription.value,
     url: page.props.ziggy?.location,
-    image: absoluteUrl(productImage(allProducts.value[0])),
+    image: absoluteUrl(catalogItemImage(allCatalogItems.value[0])),
     mainEntity: {
         '@type': 'ItemList',
-        itemListElement: allProducts.value.slice(0, 10).map((product, index) => ({
+        itemListElement: allCatalogItems.value.slice(0, 10).map((item, index) => ({
             '@type': 'ListItem',
             position: index + 1,
-            url: productDetailUrl(product),
-            name: product.name,
+            url: item.type === 'package' ? packageDetailUrl(item) : productDetailUrl(item),
+            name: item.name,
         })),
     },
 }))
@@ -172,8 +174,24 @@ function productImage(product) {
     return product?.image_url || variants.find((variant) => variant.image_url)?.image_url || fallbackHeroImage
 }
 
+function packageImage(rentalPackage) {
+    return rentalPackage?.image_url || rentalPackage?.preview_items?.find((item) => item.image_url)?.image_url || fallbackHeroImage
+}
+
+function catalogItemImage(item) {
+    return item?.type === 'package' ? packageImage(item) : productImage(item)
+}
+
 function productDetailUrl(product) {
     return appRoute('public.catalog.show', product.id)
+}
+
+function packageDetailUrl(rentalPackage) {
+    return appRoute('public.catalog.packages.show', rentalPackage.id)
+}
+
+function catalogItemUrl(item) {
+    return item?.type === 'package' ? packageDetailUrl(item) : productDetailUrl(item)
 }
 
 function variantPreviewImages(product) {
@@ -186,8 +204,23 @@ function variantPreviewImages(product) {
     return product.variants.slice(0, 3)
 }
 
-function productStatus(product) {
-    if (Number(product.total_stock || 0) <= 1) {
+function catalogItemPreviewImages(item) {
+    if (item?.type === 'package') {
+        return item.preview_items || []
+    }
+
+    return variantPreviewImages(item)
+}
+
+function catalogItemBadge(item) {
+    if (item?.type === 'package') {
+        return {
+            label: 'Paket',
+            class: 'bg-violet-100/90 text-[var(--catalog-primary)] backdrop-blur-sm',
+        }
+    }
+
+    if (Number(item.total_stock || 0) <= 1) {
         return {
             label: 'Stok Terbatas',
             class: 'bg-orange-100/90 text-orange-600 backdrop-blur-sm',
@@ -198,6 +231,52 @@ function productStatus(product) {
         label: 'Tersedia',
         class: 'bg-emerald-100/90 text-emerald-600 backdrop-blur-sm',
     }
+}
+
+function catalogItemMeta(item) {
+    if (item?.type === 'package') {
+        return `${item.items_count || 0} item`
+    }
+
+    return item.category?.name || 'Koleksi'
+}
+
+function catalogItemDescription(item) {
+    if (item?.type === 'package') {
+        return item.description || 'Paket lengkap'
+    }
+
+    return `${item.colors.length || 1} Warna · ${item.sizes.length || item.variants_count || 1} Ukuran`
+}
+
+function catalogItemPrice(item) {
+    return item?.type === 'package' ? item.package_price : item.lowest_price
+}
+
+function catalogItemPriceSuffix(item) {
+    return item?.type === 'package' ? '/ paket' : '/ 3 hari'
+}
+
+function sortCatalogItems(items) {
+    return items.sort((first, second) => {
+        if (form.sort === 'price_asc') {
+            return Number(catalogItemPrice(first) || 0) - Number(catalogItemPrice(second) || 0)
+        }
+
+        if (form.sort === 'price_desc') {
+            return Number(catalogItemPrice(second) || 0) - Number(catalogItemPrice(first) || 0)
+        }
+
+        if (form.sort === 'name_asc') {
+            return String(first.name || '').localeCompare(String(second.name || ''), 'id')
+        }
+
+        if (form.sort === 'name_desc') {
+            return String(second.name || '').localeCompare(String(first.name || ''), 'id')
+        }
+
+        return new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime()
+    })
 }
 
 function categoryIcon(name) {
@@ -231,7 +310,7 @@ function submitFilters() {
         preserveState: true,
         preserveScroll: true,
         replace: true,
-        only: ['products', 'filters'],
+        only: ['products', 'packages', 'filters'],
         reset: ['products'],
     })
 }
@@ -302,10 +381,10 @@ function persistFavorites() {
         title="Katalog"
         :description="seoDescription"
         :structured-data="structuredData"
-        :image="productImage(allProducts[0])"
+        :image="catalogItemImage(allCatalogItems[0])"
     />
 
-    <main :style="cssVars" class="min-h-screen w-full overflow-x-hidden bg-white text-[#202638]">
+    <main class="min-h-screen w-full overflow-x-hidden bg-white text-[#202638]">
         <div class="mx-auto max-w-[1440px] px-4 py-6 md:px-8 xl:px-12">
             <section
                 id="hero"
@@ -460,39 +539,40 @@ function persistFavorites() {
 
                 <InfiniteScroll data="products" manual only-next>
                     <template #default="{ loadingNext }">
-                        <div v-if="filteredProducts.length" class="space-y-4">
+                        <div v-if="filteredCatalogItems.length" class="space-y-4">
                             <div class="hidden grid-cols-2 gap-5 md:grid lg:grid-cols-4 xl:grid-cols-5">
                                 <article
-                                    v-for="product in filteredProducts"
-                                    :key="product.id"
+                                    v-for="item in filteredCatalogItems"
+                                    :key="`${item.type}-${item.id}`"
                                     class="group rounded-[20px] border border-slate-100 bg-white shadow-sm transition-shadow hover:shadow-sm"
                                 >
-                                    <Link :href="productDetailUrl(product)" class="relative block aspect-[1/1] w-full overflow-hidden rounded-t-[20px] bg-slate-100">
+                                    <Link :href="catalogItemUrl(item)" class="relative block aspect-[1/1] w-full overflow-hidden rounded-t-[20px] bg-slate-100">
                                         <img
-                                            :src="productImage(product)"
-                                            :alt="product.name"
+                                            :src="catalogItemImage(item)"
+                                            :alt="item.name"
                                             class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                         >
                                         <button
+                                            v-if="item.type === 'product'"
                                             class="absolute right-3 top-3 grid size-[34px] place-items-center rounded-full bg-white shadow-sm transition"
-                                            :class="isFavorite(product.id) ? 'text-rose-500' : 'text-slate-400 hover:text-rose-500'"
+                                            :class="isFavorite(item.id) ? 'text-rose-500' : 'text-slate-400 hover:text-rose-500'"
                                             type="button"
-                                            @click.prevent.stop="toggleFavorite(product.id)"
+                                            @click.prevent.stop="toggleFavorite(item.id)"
                                         >
                                             <PublicIcon name="heart" :size="18" />
                                         </button>
                                         <span
                                             class="absolute bottom-3 left-3 rounded-full px-2.5 py-1 text-[11px] font-bold"
-                                            :class="productStatus(product).class"
+                                            :class="catalogItemBadge(item).class"
                                         >
-                                            {{ productStatus(product).label }}
+                                            {{ catalogItemBadge(item).label }}
                                         </span>
                                     </Link>
 
                                     <div class="px-3 pb-3 pt-2">
                                         <div class="flex h-9 gap-1.5 overflow-hidden">
                                             <span
-                                                v-for="variant in variantPreviewImages(product)"
+                                                v-for="variant in catalogItemPreviewImages(item)"
                                                 :key="variant.id"
                                                 class="size-9 shrink-0 overflow-hidden rounded-[6px] border border-slate-200 bg-white"
                                             >
@@ -505,14 +585,14 @@ function persistFavorites() {
                                             </span>
                                         </div>
 
-                                        <Link :href="productDetailUrl(product)" class="mt-3 block truncate text-[15px] font-bold text-slate-800 transition hover:text-[var(--catalog-primary)]">
-                                            {{ product.name }}
+                                        <Link :href="catalogItemUrl(item)" class="mt-3 block truncate text-[15px] font-bold text-slate-800 transition hover:text-[var(--catalog-primary)]">
+                                            {{ item.name }}
                                         </Link>
-                                        <p class="mt-1 text-[13px] text-slate-500">{{ product.category?.name || 'Koleksi' }}</p>
-                                        <p class="mt-1.5 text-xs text-slate-400">{{ product.colors.length || 1 }} Warna  ·  {{ product.sizes.length || product.variants_count || 1 }} Ukuran</p>
+                                        <p class="mt-1 text-[13px] text-slate-500">{{ catalogItemMeta(item) }}</p>
+                                        <p class="mt-1.5 text-xs text-slate-400">{{ catalogItemDescription(item) }}</p>
                                         <p class="mt-3 text-[17px] font-bold text-[var(--catalog-primary)]">
-                                            {{ formatMoney(product.lowest_price) }}
-                                            <span class="text-[11px] font-medium text-slate-400">/ 3 hari</span>
+                                            {{ formatMoney(catalogItemPrice(item)) }}
+                                            <span class="text-[11px] font-medium text-slate-400">{{ catalogItemPriceSuffix(item) }}</span>
                                         </p>
                                     </div>
                                 </article>
@@ -520,42 +600,59 @@ function persistFavorites() {
 
                             <div class="grid gap-3 md:hidden">
                                 <article
-                                    v-for="product in filteredProducts"
-                                    :key="`${product.id}-mobile`"
-                                    class="relative flex gap-4 rounded-[14px] border border-slate-100 bg-white shadow-sm p-2"
+                                    v-for="item in filteredCatalogItems"
+                                    :key="`${item.type}-${item.id}-mobile`"
+                                    class="relative flex gap-4 rounded-[18px] border border-slate-100 bg-white p-3 shadow-sm active:scale-[0.99] transition-transform"
                                 >
-                                    <Link :href="productDetailUrl(product)" class="relative block aspect-[1/1] w-[96px] shrink-0 overflow-hidden rounded-[14px] bg-slate-100">
+                                    <Link :href="catalogItemUrl(item)" class="relative block aspect-[1/1] w-[112px] shrink-0 overflow-hidden rounded-[14px] bg-slate-100">
                                         <img
-                                            :src="productImage(product)"
-                                            :alt="product.name"
+                                            :src="catalogItemImage(item)"
+                                            :alt="item.name"
                                             class="h-full w-full object-cover"
                                         >
                                         <span
-                                            class="absolute bottom-1.5 left-1.5 rounded-full px-2 py-0.5 text-[9px] font-bold leading-tight"
-                                            :class="productStatus(product).class"
+                                            class="absolute bottom-2 left-2 rounded-full px-2.5 py-0.5 text-[10px] font-bold"
+                                            :class="catalogItemBadge(item).class"
                                         >
-                                            {{ productStatus(product).label }}
+                                            {{ catalogItemBadge(item).label }}
                                         </span>
                                     </Link>
 
-                                    <div class="flex flex-1 flex-col justify-center py-1">
-                                        <div class="pr-8">
-                                            <Link :href="productDetailUrl(product)" class="line-clamp-2 text-[14px] font-bold leading-snug text-slate-800">
-                                                {{ product.name }}
+                                    <div class="flex flex-1 flex-col justify-center gap-1 py-0.5">
+                                        <div class="pr-10">
+                                            <Link :href="catalogItemUrl(item)" class="line-clamp-2 text-[15px] font-bold leading-snug text-slate-800">
+                                                {{ item.name }}
                                             </Link>
                                         </div>
-                                        <p class="mt-1 text-[11px] text-slate-500">{{ product.colors.length || 1 }} Warna · {{ product.sizes.length || product.variants_count || 1 }} Ukuran</p>
-                                        <p class="mt-2.5 text-[15px] font-bold text-[var(--catalog-primary)]">
-                                            {{ formatMoney(product.lowest_price) }}
-                                            <span class="text-[10px] font-medium text-slate-400">/ 3 hari</span>
+                                        <p class="text-[11px] font-semibold text-slate-400">{{ catalogItemMeta(item) }}</p>
+
+                                        <div class="mt-1 flex gap-1.5">
+                                            <span
+                                                v-for="preview in catalogItemPreviewImages(item).slice(0, 3)"
+                                                :key="preview.id"
+                                                class="size-8 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white"
+                                            >
+                                                <img
+                                                    v-if="preview.image_url"
+                                                    :src="preview.image_url"
+                                                    :alt="preview.name"
+                                                    class="h-full w-full object-cover"
+                                                >
+                                            </span>
+                                        </div>
+
+                                        <p class="mt-1.5 text-lg font-bold text-[var(--catalog-primary)]">
+                                            {{ formatMoney(catalogItemPrice(item)) }}
+                                            <span class="text-[11px] font-medium text-slate-400">{{ catalogItemPriceSuffix(item) }}</span>
                                         </p>
                                     </div>
 
                                     <button
-                                        class="absolute right-4 top-4 transition"
-                                        :class="isFavorite(product.id) ? 'text-rose-500' : 'text-slate-300 hover:text-rose-500'"
+                                        v-if="item.type === 'product'"
+                                        class="absolute right-3 top-3 grid size-9 place-items-center rounded-full bg-white/90 shadow-sm backdrop-blur transition active:scale-110"
+                                        :class="isFavorite(item.id) ? 'text-rose-500' : 'text-slate-300 hover:text-rose-500'"
                                         type="button"
-                                        @click.prevent.stop="toggleFavorite(product.id)"
+                                        @click.prevent.stop="toggleFavorite(item.id)"
                                     >
                                         <PublicIcon name="heart" :size="20" />
                                     </button>

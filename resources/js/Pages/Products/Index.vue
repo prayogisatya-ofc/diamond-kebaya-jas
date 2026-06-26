@@ -120,7 +120,7 @@ async function destroyProduct(product) {
             </div>
         </form>
 
-        <div class="grid gap-3 md:hidden">
+        <div class="grid gap-3 lg:hidden">
             <Link
                 v-for="product in products.data"
                 :key="product.id"
@@ -146,7 +146,7 @@ async function destroyProduct(product) {
             <EmptyState v-if="products.data.length === 0" title="Tidak ada produk sesuai filter." />
         </div>
 
-        <div class="hidden overflow-hidden rounded-[2rem] border border-white/80 bg-white md:block">
+        <div class="hidden overflow-hidden rounded-[2rem] border border-white/80 bg-white lg:block">
             <table class="w-full min-w-[960px] text-left text-sm">
                 <thead class="border-b border-diamond-border bg-diamond-surface-soft text-xs uppercase tracking-wide text-diamond-muted">
                     <tr>

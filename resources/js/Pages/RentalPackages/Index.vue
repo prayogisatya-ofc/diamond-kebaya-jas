@@ -63,7 +63,7 @@ async function destroyPackage(rentalPackage) {
             </template>
         </PageHeader>
 
-        <div class="grid gap-3 md:hidden">
+        <div class="grid gap-3 lg:hidden">
             <Link
                 v-for="rentalPackage in packages"
                 :key="rentalPackage.id"
@@ -98,7 +98,7 @@ async function destroyPackage(rentalPackage) {
             <EmptyState v-if="packages.length === 0" title="Belum ada paket rental." description="Buat paket pertama untuk mempercepat input transaksi rental." />
         </div>
 
-        <div class="hidden overflow-hidden rounded-[2rem] border border-white/80 bg-white md:block">
+        <div class="hidden overflow-hidden rounded-[2rem] border border-white/80 bg-white lg:block">
             <table class="w-full min-w-[900px] text-left text-sm">
                 <thead class="border-b border-diamond-border bg-diamond-surface-soft text-xs uppercase tracking-wide text-diamond-muted">
                     <tr>
@@ -124,21 +124,14 @@ async function destroyPackage(rentalPackage) {
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex justify-end gap-2">
-                                <Link
-                                    :href="route('rental-packages.edit', rentalPackage.id)"
-                                    class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-diamond-border px-3 py-2 text-sm font-semibold text-diamond-text transition hover:bg-diamond-surface-soft"
-                                >
+                                <Button :href="route('rental-packages.edit', rentalPackage.id)" variant="secondary">
                                     <Pencil :size="15" />
                                     Edit
-                                </Link>
-                                <button
-                                    class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50"
-                                    type="button"
-                                    @click="destroyPackage(rentalPackage)"
-                                >
+                                </Button>
+                                <Button variant="danger" type="button" @click="destroyPackage(rentalPackage)">
                                     <Trash2 :size="15" />
                                     Hapus
-                                </button>
+                                </Button>
                             </div>
                         </td>
                     </tr>

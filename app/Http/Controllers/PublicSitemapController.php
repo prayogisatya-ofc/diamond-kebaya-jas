@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\RentalPackage;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -30,7 +31,8 @@ class PublicSitemapController extends Controller
                 'changefreq' => 'weekly',
                 'priority' => '0.7',
             ],
-        ])->merge($this->productEntries());
+        ])->merge($this->productEntries())
+            ->merge($this->packageEntries());
 
         return response()
             ->view('sitemap', [
@@ -67,6 +69,27 @@ class PublicSitemapController extends Controller
             ->map(fn (Product $product): array => [
                 'loc' => route('public.catalog.show', $product),
                 'lastmod' => $product->updated_at ?? now(),
+                'changefreq' => 'weekly',
+                'priority' => '0.8',
+            ]);
+    }
+
+    /**
+     * @return Collection<int, array{loc: string, lastmod: Carbon, changefreq: string, priority: string}>
+     */
+    private function packageEntries(): Collection
+    {
+        return RentalPackage::query()
+            ->select(['id', 'updated_at'])
+            ->where('is_active', true)
+            ->whereHas('items.product', fn ($query) => $query
+                ->where('is_active', true)
+                ->whereHas('category', fn ($query) => $query->where('is_active', true)))
+            ->orderByDesc('updated_at')
+            ->get()
+            ->map(fn (RentalPackage $rentalPackage): array => [
+                'loc' => route('public.catalog.packages.show', $rentalPackage),
+                'lastmod' => $rentalPackage->updated_at ?? now(),
                 'changefreq' => 'weekly',
                 'priority' => '0.8',
             ]);

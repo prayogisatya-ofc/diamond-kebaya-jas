@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Product;
+use App\Models\RentalPackage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -46,6 +47,33 @@ class PublicSeoMeta
                             ?: "{$product->name} tersedia di {$siteName}. Lihat detail varian, referensi harga, lalu datang fitting ke toko sebelum transaksi rental difinalkan."
                     ),
                     'canonical' => route('public.catalog.show', $product),
+                    'image' => self::absoluteUrl($request, $image ?: $defaultImage),
+                    'robots' => 'index,follow',
+                    'type' => 'product',
+                ];
+            }
+        }
+
+        if ($request->routeIs('public.catalog.packages.show')) {
+            $rentalPackage = $request->route('rentalPackage');
+
+            if ($rentalPackage instanceof RentalPackage) {
+                $rentalPackage->loadMissing([
+                    'items.product:id,name,image_path',
+                    'items.productVariant:id,product_id,image_path',
+                ]);
+
+                $image = $rentalPackage->items
+                    ->map(fn ($item): ?string => $item->productVariant?->imageUrl() ?: $item->product?->imageUrl())
+                    ->first(fn (?string $imageUrl): bool => filled($imageUrl));
+
+                return [
+                    'title' => "{$rentalPackage->name} | {$siteName}",
+                    'description' => self::limitDescription(
+                        $rentalPackage->description
+                            ?: "{$rentalPackage->name} tersedia di {$siteName}. Lihat item yang termasuk dalam paket lalu datang fitting ke toko sebelum transaksi rental difinalkan."
+                    ),
+                    'canonical' => route('public.catalog.packages.show', $rentalPackage),
                     'image' => self::absoluteUrl($request, $image ?: $defaultImage),
                     'robots' => 'index,follow',
                     'type' => 'product',

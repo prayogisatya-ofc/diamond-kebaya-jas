@@ -17,7 +17,7 @@ class ProductCategoryController extends Controller
         return Inertia::render('ProductCategories/Index', [
             'categories' => ProductCategory::query()
                 ->withCount('products')
-                ->orderBy('name')
+                ->latest()
                 ->get()
                 ->map(fn (ProductCategory $category): array => $this->categoryPayload($category)),
         ]);

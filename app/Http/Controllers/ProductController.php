@@ -38,7 +38,7 @@ class ProductController extends Controller
                 });
             })
             ->when($filters['category'], fn ($query, string $categoryId) => $query->where('product_category_id', $categoryId))
-            ->orderBy('name')
+            ->latest()
             ->paginate(10)
             ->withQueryString()
             ->through(fn (Product $product): array => $this->productPayload($product));
@@ -82,7 +82,7 @@ class ProductController extends Controller
         return Inertia::render('Products/Show', [
             'product' => $this->productPayload($product),
             'variants' => $product->variants
-                ->sortBy('name')
+                ->sortByDesc('created_at')
                 ->values()
                 ->map(fn (ProductVariant $variant): array => $this->variantPayload($variant)),
         ]);

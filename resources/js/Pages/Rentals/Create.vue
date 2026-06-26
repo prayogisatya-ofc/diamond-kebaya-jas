@@ -615,7 +615,7 @@ function submit() {
                     </div>
                 </section>
 
-                <aside class="grid gap-4 xl:sticky xl:top-7">
+                <aside class="grid gap-4 xl:sticky xl:top-20">
                     <section class="grid gap-5 rounded-[2rem] border border-white/80 bg-white p-4 sm:p-5">
                         <div class="flex items-center justify-between gap-4">
                             <div class="flex items-center gap-3">
