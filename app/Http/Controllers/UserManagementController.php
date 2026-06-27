@@ -7,6 +7,7 @@ use App\Http\Requests\StoreManagedUserRequest;
 use App\Http\Requests\UpdateManagedUserRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -105,6 +106,33 @@ class UserManagementController extends Controller
                 'label' => str($role->value)->headline()->toString(),
             ])
             ->all();
+    }
+
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        if ($user->id === $request->user()->id) {
+            return back()->withErrors([
+                'user' => 'Tidak bisa menghapus akun sendiri.',
+            ]);
+        }
+
+        if ($user->role === UserRole::Owner) {
+            $remainingOwners = User::query()
+                ->whereKeyNot($user->id)
+                ->where('role', UserRole::Owner->value)
+                ->where('is_active', true)
+                ->exists();
+
+            if (! $remainingOwners) {
+                return back()->withErrors([
+                    'user' => 'Minimal harus ada satu owner aktif.',
+                ]);
+            }
+        }
+
+        $user->delete();
+
+        return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }
 
     private function wouldLeaveActiveOwner(User $user, string $role, bool $isActive): bool

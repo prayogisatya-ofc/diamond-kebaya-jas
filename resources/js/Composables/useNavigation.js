@@ -1,4 +1,5 @@
 import {
+    ArrowDownToLine,
     BarChart3,
     Home,
     Package,
@@ -22,6 +23,7 @@ const sectionLabels = {
     'product-variants': 'Varian',
     'rental-packages': 'Paket',
     customers: 'Customer',
+    expenses: 'Pengeluaran',
     reports: 'Laporan',
     users: 'User',
     settings: 'Setting',
@@ -52,6 +54,7 @@ export function useNavigation() {
             { label: 'Produk', route: 'products.index', icon: Package },
             { label: 'Paket', route: 'rental-packages.index', icon: Tag },
             { label: 'Customer', route: 'customers.index', icon: Users },
+            { label: 'Pengeluaran', route: 'expenses.index', icon: ArrowDownToLine },
             { label: 'Laporan', route: 'reports.transactions', icon: BarChart3 },
         ]
 

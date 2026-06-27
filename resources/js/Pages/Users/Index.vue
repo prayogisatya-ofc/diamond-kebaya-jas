@@ -1,13 +1,14 @@
 <script setup>
 import { computed } from 'vue'
-import { Head, Link } from '@inertiajs/vue3'
-import { AtSign, Mail, Pencil, ShieldCheck, UserPlus, Users } from '@lucide/vue'
+import { Head, router } from '@inertiajs/vue3'
+import { AtSign, Mail, Pencil, ShieldCheck, Trash2, UserPlus, Users } from '@lucide/vue'
 import Button from '@/Components/Button.vue'
 import Card from '@/Components/Card.vue'
 import EmptyState from '@/Components/EmptyState.vue'
 import PageHeader from '@/Components/PageHeader.vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { useConfirm } from '@/Composables/useConfirm'
 
 defineOptions({
     layout: AppLayout,
@@ -74,6 +75,24 @@ function formattedDate(value) {
         year: 'numeric',
     }).format(new Date(value))
 }
+
+const { confirmAction } = useConfirm()
+
+async function destroyUser(user) {
+    const confirmed = await confirmAction({
+        title: 'Hapus user?',
+        message: `User ${user.name} akan dihapus permanen dari sistem.`,
+        confirmLabel: 'Ya, hapus user',
+    })
+
+    if (!confirmed) {
+        return
+    }
+
+    router.delete(route('users.destroy', user.id), {
+        preserveScroll: true,
+    })
+}
 </script>
 
 <template>
@@ -108,11 +127,10 @@ function formattedDate(value) {
         </div>
 
         <div v-if="users.length > 0" class="grid gap-3 lg:hidden">
-            <Link
+            <article
                 v-for="managedUser in users"
                 :key="managedUser.id"
-                :href="route('users.edit', managedUser.id)"
-                class="rounded-3xl border border-white/70 bg-white p-4 transition hover:border-diamond-primary/30"
+                class="rounded-3xl border border-white/70 bg-white p-4"
             >
                 <div class="flex items-start gap-4">
                     <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-diamond-primary text-base font-bold text-white">
@@ -139,7 +157,18 @@ function formattedDate(value) {
                         </div>
                     </div>
                 </div>
-            </Link>
+
+                <div class="mt-4 grid grid-cols-2 gap-2">
+                    <Button :href="route('users.edit', managedUser.id)" variant="secondary">
+                        <Pencil :size="16" />
+                        Edit
+                    </Button>
+                    <Button variant="danger" type="button" @click="destroyUser(managedUser)">
+                        <Trash2 :size="16" />
+                        Hapus
+                    </Button>
+                </div>
+            </article>
         </div>
 
         <Card v-if="users.length > 0" class="hidden overflow-hidden lg:block" :padded="false">
@@ -182,10 +211,16 @@ function formattedDate(value) {
                             </td>
                             <td class="px-6 py-4 text-diamond-muted">{{ formattedDate(managedUser.created_at) }}</td>
                             <td class="px-6 py-4 text-right">
-                                <Button :href="route('users.edit', managedUser.id)" variant="secondary">
-                                    <Pencil :size="16" />
-                                    Edit
-                                </Button>
+                                <div class="flex justify-end gap-2">
+                                    <Button :href="route('users.edit', managedUser.id)" variant="secondary">
+                                        <Pencil :size="16" />
+                                        Edit
+                                    </Button>
+                                    <Button variant="danger" type="button" @click="destroyUser(managedUser)">
+                                        <Trash2 :size="16" />
+                                        Hapus
+                                    </Button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>

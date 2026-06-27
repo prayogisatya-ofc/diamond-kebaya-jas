@@ -1,7 +1,7 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3'
-import { reactive } from 'vue'
-import { RotateCcw, Search } from '@lucide/vue'
+import { computed, reactive } from 'vue'
+import { Download, RotateCcw, Search } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Button from '@/Components/Button.vue'
 import EmptyState from '@/Components/EmptyState.vue'
@@ -27,6 +27,14 @@ const form = reactive({
     payment_type: props.filters.payment_type || '',
     payment_method: props.filters.payment_method || '',
     staff_id: props.filters.staff_id || '',
+})
+
+const pdfUrl = computed(() => {
+    const params = clean(form)
+    const url = new URL(route('reports.payments.pdf'), window.location.origin)
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
+
+    return url.toString()
 })
 
 function submit() {
@@ -92,6 +100,10 @@ function selectClasses() {
             title="Laporan pembayaran"
         >
             <template #actions>
+                <a :href="pdfUrl" class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-diamond-border bg-white px-4 py-3 text-sm font-semibold text-diamond-text transition hover:bg-diamond-surface-soft">
+                    <Download :size="18" />
+                    Export PDF
+                </a>
                 <ReportTabs active="payments" />
             </template>
         </PageHeader>

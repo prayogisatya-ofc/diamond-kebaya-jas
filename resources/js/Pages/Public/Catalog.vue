@@ -392,7 +392,7 @@ function persistFavorites() {
             >
                 <div class="relative grid h-full md:grid-cols-[minmax(0,1fr)_minmax(320px,46%)]">
                     <div class="relative mb-4 overflow-hidden rounded-t-[24px] md:hidden">
-                        <img
+                        <img loading="lazy"
                             :src="fallbackHeroImage"
                             alt="Sewa kebaya dan jas"
                             class="h-[300px] w-full object-cover object-[64%_top] md:object-[64%_center]"
@@ -432,7 +432,7 @@ function persistFavorites() {
                     </div>
 
                     <div class="relative hidden h-full md:block">
-                        <img
+                        <img loading="lazy"
                             :src="fallbackHeroImage"
                             alt="Sewa kebaya dan jas"
                             class="h-full w-full object-cover object-[72%_center]"
@@ -547,7 +547,7 @@ function persistFavorites() {
                                     class="group rounded-[20px] border border-slate-100 bg-white shadow-sm transition-shadow hover:shadow-sm"
                                 >
                                     <Link :href="catalogItemUrl(item)" class="relative block aspect-[1/1] w-full overflow-hidden rounded-t-[20px] bg-slate-100">
-                                        <img
+                                        <img loading="lazy"
                                             :src="catalogItemImage(item)"
                                             :alt="item.name"
                                             class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -576,7 +576,7 @@ function persistFavorites() {
                                                 :key="variant.id"
                                                 class="size-9 shrink-0 overflow-hidden rounded-[6px] border border-slate-200 bg-white"
                                             >
-                                                <img
+                                                <img loading="lazy"
                                                     v-if="variant.image_url"
                                                     :src="variant.image_url"
                                                     :alt="variant.name"
@@ -605,7 +605,7 @@ function persistFavorites() {
                                     class="relative flex gap-4 rounded-[18px] border border-slate-100 bg-white p-3 shadow-sm active:scale-[0.99] transition-transform"
                                 >
                                     <Link :href="catalogItemUrl(item)" class="relative block aspect-[1/1] w-[112px] shrink-0 overflow-hidden rounded-[14px] bg-slate-100">
-                                        <img
+                                        <img loading="lazy"
                                             :src="catalogItemImage(item)"
                                             :alt="item.name"
                                             class="h-full w-full object-cover"
@@ -632,7 +632,7 @@ function persistFavorites() {
                                                 :key="preview.id"
                                                 class="size-8 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white"
                                             >
-                                                <img
+                                                <img loading="lazy"
                                                     v-if="preview.image_url"
                                                     :src="preview.image_url"
                                                     :alt="preview.name"

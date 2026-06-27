@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\PdfExportController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductVariantController;
@@ -53,14 +55,20 @@ Route::prefix('panel')->group(function (): void {
 
         Route::prefix('reports')->name('reports.')->group(function (): void {
             Route::get('transactions', [ReportController::class, 'transactions'])->name('transactions');
+            Route::get('transactions/pdf', [PdfExportController::class, 'transactions'])->name('transactions.pdf');
             Route::get('payments', [ReportController::class, 'payments'])->name('payments');
+            Route::get('payments/pdf', [PdfExportController::class, 'payments'])->name('payments.pdf');
             Route::get('rented-products', [ReportController::class, 'rentedProducts'])->name('rented-products');
+            Route::get('rented-products/pdf', [PdfExportController::class, 'rentedProducts'])->name('rented-products.pdf');
         });
+
+        Route::get('expenses/pdf', [PdfExportController::class, 'expenses'])->name('expenses.pdf');
 
         Route::resource('product-categories', ProductCategoryController::class);
         Route::resource('products', ProductController::class);
         Route::resource('rental-packages', RentalPackageController::class);
         Route::resource('customers', CustomerController::class);
+        Route::resource('expenses', ExpenseController::class);
         Route::resource('rentals', RentalController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
         Route::get('rentals/{rental}/invoice', RentalInvoiceController::class)
             ->name('rentals.invoice');
@@ -93,7 +101,7 @@ Route::prefix('panel')->group(function (): void {
             Route::post('settings', [StoreSettingController::class, 'update'])
                 ->name('settings.update');
             Route::resource('users', UserManagementController::class)
-                ->only(['index', 'create', 'store', 'edit', 'update']);
+                ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
             Route::post('users/{user}/password', UserPasswordController::class)
                 ->name('users.password.update');
         });

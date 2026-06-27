@@ -1,7 +1,7 @@
 <script setup>
 import { Head, router } from '@inertiajs/vue3'
-import { reactive } from 'vue'
-import { PackageSearch, RotateCcw, Search } from '@lucide/vue'
+import { computed, reactive } from 'vue'
+import { Download, PackageSearch, RotateCcw, Search } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Button from '@/Components/Button.vue'
 import EmptyState from '@/Components/EmptyState.vue'
@@ -21,6 +21,14 @@ const props = defineProps({
 const form = reactive({
     date_from: props.filters.date_from || '',
     date_to: props.filters.date_to || '',
+})
+
+const pdfUrl = computed(() => {
+    const params = clean(form)
+    const url = new URL(route('reports.rented-products.pdf'), window.location.origin)
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
+
+    return url.toString()
 })
 
 function submit() {
@@ -60,6 +68,10 @@ function inputClasses() {
             title="Laporan produk disewa"
         >
             <template #actions>
+                <a :href="pdfUrl" class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-diamond-border bg-white px-4 py-3 text-sm font-semibold text-diamond-text transition hover:bg-diamond-surface-soft">
+                    <Download :size="18" />
+                    Export PDF
+                </a>
                 <ReportTabs active="rented-products" />
             </template>
         </PageHeader>

@@ -171,7 +171,7 @@ function changeImage(url) {
                 <div class="relative">
                     <div class="sticky top-[110px] space-y-4">
                         <div class="relative aspect-square w-full overflow-hidden rounded-[24px] bg-violet-50 md:rounded-[32px]">
-                            <img
+                            <img loading="lazy"
                                 :src="activeImage"
                                 :alt="rentalPackage.name"
                                 class="h-full w-full object-cover transition-opacity duration-300"
@@ -191,7 +191,7 @@ function changeImage(url) {
                                 @click="changeImage(itemImage(item))"
                             >
                                 <div class="aspect-square w-full overflow-hidden bg-slate-100">
-                                    <img
+                                    <img loading="lazy"
                                         v-if="itemImage(item)"
                                         :src="itemImage(item)"
                                         :alt="item.name"
@@ -277,7 +277,7 @@ function changeImage(url) {
                         class="group flex gap-4 rounded-[20px] border border-slate-100 bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
                     >
                         <div class="aspect-square w-[104px] shrink-0 overflow-hidden rounded-[16px] bg-slate-100">
-                            <img
+                            <img loading="lazy"
                                 :src="itemImage(item)"
                                 :alt="item.name"
                                 class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -324,7 +324,7 @@ function changeImage(url) {
                         class="group rounded-[20px] border border-slate-100 bg-white shadow-sm transition-shadow hover:shadow-md"
                     >
                         <div class="relative block aspect-[1/1] w-full overflow-hidden rounded-t-[20px] bg-slate-100">
-                            <img
+                            <img loading="lazy"
                                 :src="relatedPackage.image_url || fallbackHeroImage"
                                 :alt="relatedPackage.name"
                                 class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

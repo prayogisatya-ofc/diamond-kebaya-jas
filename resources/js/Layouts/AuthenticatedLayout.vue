@@ -105,7 +105,7 @@ watch(themeStyle, (style) => applyThemeVariables(style), { immediate: true })
                     </div>
                 </div>
 
-                <nav class="flex flex-1 flex-col gap-1.5 overflow-y-auto px-3 py-2">
+                <nav class="flex flex-1 flex-col gap-1.5 overflow-hidden px-3 py-2">
                     <Link
                         v-for="item in navigation"
                         :key="item.route"
