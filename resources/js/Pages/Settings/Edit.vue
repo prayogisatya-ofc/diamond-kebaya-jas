@@ -26,6 +26,7 @@ const form = useForm({
     invoice_footer_note: props.settings.invoice_footer_note,
     primary_color: props.settings.primary_color || '#615cf9',
     whatsapp_notifications_enabled: props.settings.whatsapp_notifications_enabled ?? true,
+    whatsapp_rental_message_template: props.settings.whatsapp_rental_message_template || '',
     logo: null,
 })
 
@@ -199,6 +200,30 @@ function submit() {
                                 label="Aktifkan notifikasi WhatsApp"
                                 description=""
                             />
+                        </div>
+                    </section>
+
+                    <section class="grid gap-4 rounded-[2rem] border border-white/80 bg-white p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:p-6">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                            <MessageCircle :size="22" />
+                        </div>
+                        <div class="grid gap-4">
+                            <div>
+                                <p class="text-sm font-bold text-diamond-text">Template pesan WhatsApp manual</p>
+                                <p class="mt-1 text-sm leading-6 text-diamond-muted">
+                                    Dipakai saat klik tombol WhatsApp di detail rental. Gunakan placeholder: <code class="rounded-md bg-diamond-surface-soft px-1.5 py-0.5 text-xs font-bold">{customer_name}</code>, <code class="rounded-md bg-diamond-surface-soft px-1.5 py-0.5 text-xs font-bold">{store_name}</code>, <code class="rounded-md bg-diamond-surface-soft px-1.5 py-0.5 text-xs font-bold">{invoice_number}</code>, <code class="rounded-md bg-diamond-surface-soft px-1.5 py-0.5 text-xs font-bold">{pickup_at}</code>, <code class="rounded-md bg-diamond-surface-soft px-1.5 py-0.5 text-xs font-bold">{return_due_at}</code>, <code class="rounded-md bg-diamond-surface-soft px-1.5 py-0.5 text-xs font-bold">{total_amount}</code>, <code class="rounded-md bg-diamond-surface-soft px-1.5 py-0.5 text-xs font-bold">{remaining_amount}</code>, <code class="rounded-md bg-diamond-surface-soft px-1.5 py-0.5 text-xs font-bold">{item_list}</code>, <code class="rounded-md bg-diamond-surface-soft px-1.5 py-0.5 text-xs font-bold">{invoice_url}</code>.
+                                </p>
+                            </div>
+                            <label class="grid gap-2">
+                                <textarea
+                                    v-model="form.whatsapp_rental_message_template"
+                                    class="min-h-32 w-full rounded-xl border border-diamond-border bg-white px-4 py-3 text-sm leading-6 text-diamond-text outline-none transition placeholder:text-diamond-soft focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10"
+                                    placeholder="Template pesan WhatsApp..."
+                                />
+                                <span v-if="form.errors.whatsapp_rental_message_template" class="text-sm text-diamond-danger">
+                                    {{ form.errors.whatsapp_rental_message_template }}
+                                </span>
+                            </label>
                         </div>
                     </section>
 

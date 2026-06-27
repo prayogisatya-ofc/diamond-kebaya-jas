@@ -38,6 +38,7 @@ class UpdateStoreSettingRequest extends FormRequest
             'invoice_footer_note' => ['nullable', 'string', 'max:1000'],
             'primary_color' => ['required', 'hex_color'],
             'whatsapp_notifications_enabled' => ['sometimes', 'boolean'],
+            'whatsapp_rental_message_template' => ['nullable', 'string', 'max:2000'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];
     }

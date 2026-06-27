@@ -1,7 +1,7 @@
 <script setup>
 import { Head, router, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
-import { ArrowLeft, CalendarClock, CheckCircle2, CreditCard, PackagePlus, Pencil, Plus, Printer, ReceiptText, RotateCcw, Save, Search, ShoppingBag, Trash2, X, XCircle } from '@lucide/vue'
+import { ArrowLeft, CalendarClock, CheckCircle2, CreditCard, MessageCircle, PackagePlus, Pencil, Plus, Printer, ReceiptText, RotateCcw, Save, Search, ShoppingBag, Trash2, X, XCircle } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Button from '@/Components/Button.vue'
 import Card from '@/Components/Card.vue'
@@ -38,6 +38,10 @@ const props = defineProps({
     store: {
         type: Object,
         required: true,
+    },
+    invoiceUrl: {
+        type: String,
+        default: '',
     },
 })
 const { confirmAction } = useConfirm()
@@ -90,6 +94,38 @@ const returnForm = useForm({
 
 const remainingAmount = computed(() => Number(props.rental.remaining_amount || 0))
 const pickUpPaymentRequired = computed(() => remainingAmount.value > 0)
+
+const whatsappUrl = computed(() => {
+    const customerPhone = props.rental.customer?.whatsapp_number
+    if (!customerPhone) {
+        return '#'
+    }
+
+    const digits = String(customerPhone).replace(/\D/g, '')
+    const phone = digits.startsWith('0') ? `62${digits.slice(1)}` : digits
+
+    const template = (props.store.whatsapp_rental_message_template || '').trim()
+        || 'Halo {customer_name}, rental Anda di {store_name} sudah tercatat.\n\nInvoice: {invoice_number}\nJadwal ambil: {pickup_at}\nJadwal kembali: {return_due_at}\nTotal: {total_amount}\nSisa bayar: {remaining_amount}\n\nItem:\n{item_list}\n\nDetail order:\n{invoice_url}\n\nTerima kasih.'
+
+    const itemList = (props.items || []).map((item, i) => {
+        const variantLabel = item.variant_name_snapshot ? ` - ${item.variant_name_snapshot}` : ''
+
+        return `${i + 1}. ${item.item_name_snapshot}${variantLabel} (${item.quantity}x) = ${formatMoney(item.final_price)}`
+    }).join('\n') || '-'
+
+    const message = template
+        .replace(/{customer_name}/g, props.rental.customer?.name || '-')
+        .replace(/{invoice_number}/g, props.rental.invoice_number || '-')
+        .replace(/{pickup_at}/g, formatDate(props.rental.pickup_at))
+        .replace(/{return_due_at}/g, formatDate(props.rental.return_due_at))
+        .replace(/{total_amount}/g, formatMoney(props.rental.total_amount))
+        .replace(/{remaining_amount}/g, formatMoney(props.rental.remaining_amount))
+        .replace(/{store_name}/g, props.store.name || '')
+        .replace(/{item_list}/g, itemList)
+        .replace(/{invoice_url}/g, props.invoiceUrl || '')
+
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+})
 
 const productById = computed(() => {
     return props.products.reduce((carry, product) => {
@@ -471,6 +507,16 @@ async function printThermalReceipt() {
                     <ArrowLeft :size="18" />
                     Kembali
                 </Button>
+                <a
+                    v-if="rental.customer?.whatsapp_number"
+                    :href="whatsappUrl"
+                    target="_blank"
+                    rel="noreferrer"
+                    class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
+                >
+                    <MessageCircle :size="18" />
+                    Chat Customer
+                </a>
                 <Button :href="route('rentals.invoice', rental.id)" variant="secondary">
                     <ReceiptText :size="18" />
                     Invoice

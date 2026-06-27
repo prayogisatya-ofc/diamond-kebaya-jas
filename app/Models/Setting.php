@@ -38,6 +38,7 @@ class Setting extends Model
             'invoice_footer_note' => $profile['invoice_footer_note'] ?: 'Terima kasih sudah menyewa di Diamond Kebaya & Jas.',
             'primary_color' => $profile['primary_color'] ?: '#615cf9',
             'whatsapp_notifications_enabled' => self::booleanValue($profile['whatsapp_notifications_enabled'] ?? true),
+            'whatsapp_rental_message_template' => $profile['whatsapp_rental_message_template'] ?? '',
             'store_logo_path' => $logoPath,
             'store_logo_url' => $logoPath ? Storage::disk('public')->url($logoPath) : null,
             'store_favicon_path' => $faviconPath,
@@ -79,6 +80,7 @@ class Setting extends Model
             'invoice_footer_note' => 'Terima kasih sudah menyewa di Diamond Kebaya & Jas.',
             'primary_color' => '#615cf9',
             'whatsapp_notifications_enabled' => true,
+            'whatsapp_rental_message_template' => "Halo {customer_name}, rental Anda di {store_name} sudah tercatat.\n\nInvoice: {invoice_number}\nJadwal ambil: {pickup_at}\nJadwal kembali: {return_due_at}\nTotal: {total_amount}\nSisa bayar: {remaining_amount}\n\nItem:\n{item_list}\n\nDetail order:\n{invoice_url}\n\nTerima kasih.",
         ];
     }
 

@@ -18,6 +18,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -148,8 +149,11 @@ class RentalController extends Controller
             'payments.creator:id,name',
         ]);
 
+        $invoiceUrl = URL::signedRoute('public.rentals.invoice', $rental->id);
+
         return Inertia::render('Rentals/Show', [
             'rental' => $this->rentalPayload($rental),
+            'invoiceUrl' => $invoiceUrl,
             'items' => $rental->items
                 ->sortByDesc('created_at')
                 ->values()
@@ -190,6 +194,7 @@ class RentalController extends Controller
             'logo_url' => $profile['store_logo_url'],
             'footer_note' => $profile['invoice_footer_note'],
             'primary_color' => $profile['primary_color'],
+            'whatsapp_rental_message_template' => $profile['whatsapp_rental_message_template'] ?? '',
         ];
     }
 
