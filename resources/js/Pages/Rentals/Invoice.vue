@@ -1,7 +1,9 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3'
-import { CalendarClock, CheckCircle2, Clock3, CreditCard, MapPin, MessageCircle, PackageCheck, ReceiptText, ShieldCheck, ShoppingBag, Store, UserRound } from '@lucide/vue'
+import { CalendarClock, CheckCircle2, Clock3, CreditCard, MapPin, MessageCircle, PackageCheck, ReceiptText, ShieldCheck, ShoppingBag, UserRound } from '@lucide/vue'
 import { computed } from 'vue'
+
+const logoUrl = '/logo-ig.jpg'
 
 const props = defineProps({
     publicView: {
@@ -35,6 +37,18 @@ function formatMoney(value) {
 }
 
 function formatDate(value) {
+    if (!value) {
+        return '-'
+    }
+
+    return new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+    }).format(new Date(value))
+}
+
+function formatDateTime(value) {
     if (!value) {
         return '-'
     }
@@ -136,7 +150,7 @@ const storeWhatsappUrl = whatsappUrl(props.store.whatsapp_number)
 const timeline = [
     {
         label: 'Order dibuat',
-        value: formatDate(props.rental.created_at),
+        value: formatDateTime(props.rental.created_at),
         active: true,
         icon: ReceiptText,
     },
@@ -148,13 +162,13 @@ const timeline = [
     },
     {
         label: props.rental.picked_up_at ? 'Sudah diambil' : 'Belum diambil',
-        value: props.rental.picked_up_at ? formatDate(props.rental.picked_up_at) : 'Menunggu pengambilan',
+        value: props.rental.picked_up_at ? formatDateTime(props.rental.picked_up_at) : 'Menunggu pengambilan',
         active: Boolean(props.rental.picked_up_at),
         icon: PackageCheck,
     },
     {
         label: props.rental.returned_at ? 'Sudah dikembalikan' : 'Jadwal kembali',
-        value: props.rental.returned_at ? formatDate(props.rental.returned_at) : formatDate(props.rental.return_due_at),
+        value: props.rental.returned_at ? formatDateTime(props.rental.returned_at) : formatDate(props.rental.return_due_at),
         active: Boolean(props.rental.returned_at),
         icon: CheckCircle2,
     },
@@ -171,8 +185,7 @@ const timeline = [
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-diamond-primary ring-2 ring-diamond-primary/15">
-                                <img v-if="store.logo_url" :src="store.logo_url" :alt="store.name" class="h-full w-full object-contain">
-                                <Store v-else :size="26" />
+                                <img :src="logoUrl" alt="Diamond Kebaya & Jas" class="h-full w-full object-contain">
                             </div>
                             <div class="min-w-0">
                                 <p class="text-sm font-semibold text-slate-500">{{ store.name }}</p>
@@ -272,14 +285,14 @@ const timeline = [
                                 <div class="flex items-start justify-between gap-4">
                                     <div class="min-w-0">
                                         <p class="text-base font-bold text-diamond-text">{{ item.item_name_snapshot }}</p>
-                                        <p class="mt-1 text-sm text-slate-500">{{ item.variant_name_snapshot || 'Tanpa varian khusus' }}</p>
+                                        <p class="mt-1 text-sm text-slate-500">{{ item.variant_name_snapshot || 'Tanpa varian khusus' }}<span v-if="item.variant_sku" class="ml-2 rounded-full bg-diamond-surface-soft px-2 py-0.5 text-[11px] font-semibold text-diamond-muted">{{ item.variant_sku }}</span></p>
                                         <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
                                             <span v-if="item.package_name" class="rounded-full bg-slate-100 px-3 py-1">Paket: {{ item.package_name }}</span>
                                             <span v-if="item.notes" class="rounded-full bg-slate-100 px-3 py-1">{{ item.notes }}</span>
                                         </div>
                                     </div>
                                     <div class="shrink-0 text-right">
-                                        <p class="rounded-full bg-diamond-accent-soft px-3 py-1 text-xs font-bold text-diamond-accent">Qty {{ item.quantity }}</p>
+                                        <span class="inline-block rounded-full bg-diamond-accent-soft px-3 py-1 text-xs font-bold text-diamond-accent">Qty {{ item.quantity }}</span>
                                         <p class="mt-3 text-sm font-bold text-diamond-text">{{ formatMoney(item.final_price) }}</p>
                                     </div>
                                 </div>
@@ -304,7 +317,7 @@ const timeline = [
                             <article v-for="payment in payments" :key="payment.id" class="flex items-start justify-between gap-4 rounded-3xl bg-slate-50 p-4">
                                 <div class="min-w-0">
                                     <p class="font-bold text-diamond-text">{{ paymentTypeLabel(payment.payment_type) }}</p>
-                                    <p class="mt-1 text-sm text-slate-500">{{ formatDate(payment.paid_at) }}</p>
+                                    <p class="mt-1 text-sm text-slate-500">{{ formatDateTime(payment.paid_at) }}</p>
                                     <p v-if="payment.notes" class="mt-2 text-sm leading-5 text-slate-500">{{ payment.notes }}</p>
                                 </div>
                                 <div class="shrink-0 text-right">

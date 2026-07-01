@@ -9,6 +9,18 @@ function formatDate(value) {
         return '-'
     }
 
+    return new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+    }).format(new Date(value))
+}
+
+function formatDateTime(value) {
+    if (!value) {
+        return '-'
+    }
+
     const parsedDate = new Date(value)
     const datePart = new Intl.DateTimeFormat('id-ID', {
         day: '2-digit',
@@ -151,7 +163,7 @@ export function buildRentalEscPosReceipt({ store, rental, items, payments }) {
     text += '\x1B\x61\x00'
     text += separator
     text += line('No', rental.invoice_number, width)
-    text += line('Tgl', formatDate(rental.created_at), width)
+    text += line('Tgl', formatDateTime(rental.created_at), width)
     text += line('Customer', rental.customer?.name || '-', width)
     text += line('Ambil', formatDate(rental.pickup_at), width)
     text += line('Kembali', formatDate(rental.return_due_at), width)
@@ -161,7 +173,7 @@ export function buildRentalEscPosReceipt({ store, rental, items, payments }) {
 
     items.forEach((item) => {
         const itemName = item.variant_name_snapshot
-            ? `${item.item_name_snapshot} (${item.variant_name_snapshot})`
+            ? `${item.item_name_snapshot} (${item.variant_name_snapshot})${item.variant_sku ? ` [${item.variant_sku}]` : ''}`
             : item.item_name_snapshot
 
         text += `${wrapText(itemName, width)}\n`

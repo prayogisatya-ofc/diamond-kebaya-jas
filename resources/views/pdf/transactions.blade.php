@@ -58,14 +58,14 @@
                     <td>{{ $rental->invoice_number }}</td>
                     <td>{{ $rental->customer?->name ?? '-' }}</td>
                     <td>{{ $rental->created_at->format('d/m/Y') }}</td>
-                    <td>{{ $rental->pickup_at ? $rental->pickup_at->format('d/m/Y H:i') : '-' }}</td>
-                    <td>{{ $rental->return_due_at ? $rental->return_due_at->format('d/m/Y H:i') : '-' }}</td>
-                    <td><span class="badge badge-{{ $rental->status }}">{{ $rental->status }}</span></td>
-                    <td><span class="badge badge-{{ $rental->payment_status }}">{{ $rental->payment_status }}</span></td>
-                    <td class="text-right">Rp{{ number_format($rental->total_amount, 0, ',', '.') }}</td>
-                    <td class="text-right">Rp{{ number_format($rental->paid_amount, 0, ',', '.') }}</td>
-                    <td class="text-right">Rp{{ number_format($rental->remaining_amount, 0, ',', '.') }}</td>
-                    <td class="text-right">Rp{{ number_format($rental->penalty_amount, 0, ',', '.') }}</td>
+                    <td>{{ $rental->pickup_at ? $rental->pickup_at->format('d/m/Y') : '-' }}</td>
+                    <td>{{ $rental->return_due_at ? $rental->return_due_at->format('d/m/Y') : '-' }}</td>
+                    <td><span class="badge badge-{{ $rental->status }}">{{ $rental->status === 'picked_up' ? 'Diambil' : ($rental->status === 'returned' ? 'Kembali' : ($rental->status === 'completed' ? 'Selesai' : ($rental->status === 'overdue' ? 'Terlambat' : ($rental->status === 'cancelled' ? 'Batal' : ($rental->status === 'booked' ? 'Booking' : $rental->status))))) }}</span></td>
+                    <td><span class="badge badge-{{ $rental->payment_status }}">{{ $rental->payment_status === 'unpaid' ? 'Belum Bayar' : ($rental->payment_status === 'dp' ? 'DP' : ($rental->payment_status === 'paid' ? 'Lunas' : ($rental->payment_status === 'overpaid' ? 'Lebih Bayar' : $rental->payment_status))) }}</span></td>
+                    <td class="text-right">Rp {{ number_format($rental->total_amount, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($rental->paid_amount, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($rental->remaining_amount, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($rental->penalty_amount, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>

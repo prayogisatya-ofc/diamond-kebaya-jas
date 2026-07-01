@@ -1,7 +1,7 @@
 <script setup>
 import { Head, router, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
-import { ArrowLeft, CalendarClock, CheckCircle2, CreditCard, MessageCircle, PackagePlus, Pencil, Plus, Printer, ReceiptText, RotateCcw, Save, Search, ShoppingBag, Trash2, X, XCircle } from '@lucide/vue'
+import { ArrowLeft, CalendarClock, CheckCircle2, CreditCard, PackagePlus, Pencil, Plus, Printer, ReceiptText, RotateCcw, Save, Search, ShoppingBag, Trash2, X, XCircle } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Button from '@/Components/Button.vue'
 import Card from '@/Components/Card.vue'
@@ -13,6 +13,7 @@ import PageHeader from '@/Components/PageHeader.vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
 import { useConfirm } from '@/Composables/useConfirm'
 import { printRentalThermalReceipt } from '@/Utils/thermalReceiptPrinter'
+import PublicIcon from '@/Components/Public/PublicIcon.vue'
 
 defineOptions({
     layout: AppLayout,
@@ -189,6 +190,16 @@ function formatMoney(value) {
 }
 
 function formatDate(value) {
+    if (!value) {
+        return '-'
+    }
+
+    return new Intl.DateTimeFormat('id-ID', {
+        dateStyle: 'medium',
+    }).format(new Date(value))
+}
+
+function formatDateTime(value) {
     if (!value) {
         return '-'
     }
@@ -512,9 +523,9 @@ async function printThermalReceipt() {
                     :href="whatsappUrl"
                     target="_blank"
                     rel="noreferrer"
-                    class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
+                    class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-200 sm:min-h-11 sm:px-4 sm:py-3 sm:text-sm"
                 >
-                    <MessageCircle :size="18" />
+                    <PublicIcon name="brand-whatsapp" :size="21" class="text-white" />
                     Chat Customer
                 </a>
                 <Button :href="route('rentals.invoice', rental.id)" variant="secondary">
@@ -658,12 +669,12 @@ async function printThermalReceipt() {
                     </div>
                     <div class="rounded-3xl bg-diamond-surface-soft p-4">
                         <dt class="text-sm font-semibold text-diamond-muted">Diambil</dt>
-                        <dd class="mt-1 text-sm font-bold text-diamond-text">{{ formatDate(rental.picked_up_at) }}</dd>
+                        <dd class="mt-1 text-sm font-bold text-diamond-text">{{ formatDateTime(rental.picked_up_at) }}</dd>
                         <dd class="mt-1 text-xs text-diamond-muted">{{ rental.picked_up_by?.name || '-' }}</dd>
                     </div>
                     <div class="rounded-3xl bg-diamond-surface-soft p-4">
                         <dt class="text-sm font-semibold text-diamond-muted">Dikembalikan</dt>
-                        <dd class="mt-1 text-sm font-bold text-diamond-text">{{ formatDate(rental.returned_at) }}</dd>
+                        <dd class="mt-1 text-sm font-bold text-diamond-text">{{ formatDateTime(rental.returned_at) }}</dd>
                         <dd class="mt-1 text-xs text-diamond-muted">{{ rental.returned_by?.name || '-' }}</dd>
                     </div>
                     <div class="rounded-3xl bg-diamond-surface-soft p-4">
@@ -709,7 +720,7 @@ async function printThermalReceipt() {
                             </div>
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-bold text-diamond-text">{{ item.item_name_snapshot }}</p>
-                                <p class="mt-1 truncate text-xs text-diamond-muted">{{ item.variant_name_snapshot || 'Tanpa varian' }}</p>
+                                <p class="mt-1 truncate text-xs text-diamond-muted">{{ item.variant_name_snapshot || 'Tanpa varian' }}<span v-if="item.variant_sku" class="ml-1.5 rounded-full bg-diamond-surface-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase text-diamond-muted">{{ item.variant_sku }}</span></p>
                             </div>
                         </div>
                         <span class="shrink-0 rounded-full bg-diamond-primary-soft px-3 py-1 text-xs font-bold text-diamond-primary">Qty {{ item.quantity }}</span>
@@ -773,7 +784,7 @@ async function printThermalReceipt() {
                                     </div>
                                     <div class="min-w-0">
                                         <p class="truncate font-bold text-diamond-text">{{ item.item_name_snapshot }}</p>
-                                        <p class="mt-1 truncate text-xs text-diamond-muted">{{ item.variant_name_snapshot || 'Tanpa varian' }}</p>
+                                        <p class="mt-1 truncate text-xs text-diamond-muted">{{ item.variant_name_snapshot || 'Tanpa varian' }}<span v-if="item.variant_sku" class="ml-1.5 rounded-full bg-diamond-surface-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase text-diamond-muted">{{ item.variant_sku }}</span></p>
                                     </div>
                                 </div>
                             </td>

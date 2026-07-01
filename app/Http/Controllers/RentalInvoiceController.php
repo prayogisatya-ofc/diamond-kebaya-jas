@@ -20,6 +20,7 @@ class RentalInvoiceController extends Controller
             'pickedUpBy:id,name',
             'returnedBy:id,name',
             'items.rentalPackage:id,name',
+            'items.productVariant:id,product_id,sku,name',
             'payments.creator:id,name',
         ]);
 
@@ -108,6 +109,7 @@ class RentalInvoiceController extends Controller
             'package_name' => $item->rentalPackage?->name,
             'item_name_snapshot' => $item->item_name_snapshot,
             'variant_name_snapshot' => $item->variant_name_snapshot,
+            'variant_sku' => $item->productVariant?->sku,
             'quantity' => $item->quantity,
             'unit_price' => $item->unit_price,
             'discount_amount' => $item->discount_amount,

@@ -16,7 +16,7 @@ class Setting extends Model
     use HasFactory, HasUlids;
 
     /**
-     * @return array{store_name: string, store_address: string, store_whatsapp_number: string, invoice_footer_note: string, primary_color: string, whatsapp_notifications_enabled: bool, store_logo_path: string|null, store_logo_url: string|null, store_favicon_path: string|null, store_favicon_url: string|null}
+     * @return array{store_name: string, store_address: string, store_whatsapp_number: string, invoice_footer_note: string, primary_color: string, store_logo_path: string|null, store_logo_url: string|null, store_favicon_path: string|null, store_favicon_url: string|null}
      */
     public static function storeProfile(): array
     {
@@ -38,7 +38,7 @@ class Setting extends Model
             'invoice_footer_note' => $profile['invoice_footer_note'] ?: 'Terima kasih sudah menyewa di Diamond Kebaya & Jas.',
             'primary_color' => $profile['primary_color'] ?: '#615cf9',
             'whatsapp_notifications_enabled' => self::booleanValue($profile['whatsapp_notifications_enabled'] ?? true),
-            'whatsapp_rental_message_template' => $profile['whatsapp_rental_message_template'] ?? '',
+            'whatsapp_rental_message_template' => $profile['whatsapp_rental_message_template'] ?? "Halo {customer_name}, rental Anda di {store_name} sudah tercatat.\n\nInvoice: {invoice_number}\nJadwal ambil: {pickup_at}\nJadwal kembali: {return_due_at}\nTotal: {total_amount}\nSisa bayar: {remaining_amount}\n\nItem:\n{item_list}\n\nDetail order:\n{invoice_url}\n\nTerima kasih.",
             'store_logo_path' => $logoPath,
             'store_logo_url' => $logoPath ? Storage::disk('public')->url($logoPath) : null,
             'store_favicon_path' => $faviconPath,
@@ -61,11 +61,6 @@ class Setting extends Model
         }
     }
 
-    public static function whatsappNotificationsEnabled(): bool
-    {
-        return self::storeProfile()['whatsapp_notifications_enabled'];
-    }
-
     /**
      * @return array<string, mixed>
      */
@@ -80,7 +75,6 @@ class Setting extends Model
             'invoice_footer_note' => 'Terima kasih sudah menyewa di Diamond Kebaya & Jas.',
             'primary_color' => '#615cf9',
             'whatsapp_notifications_enabled' => true,
-            'whatsapp_rental_message_template' => "Halo {customer_name}, rental Anda di {store_name} sudah tercatat.\n\nInvoice: {invoice_number}\nJadwal ambil: {pickup_at}\nJadwal kembali: {return_due_at}\nTotal: {total_amount}\nSisa bayar: {remaining_amount}\n\nItem:\n{item_list}\n\nDetail order:\n{invoice_url}\n\nTerima kasih.",
         ];
     }
 
@@ -110,10 +104,6 @@ class Setting extends Model
     {
         if (in_array($key, ['store_logo_path', 'store_favicon_path'], true)) {
             return 'file';
-        }
-
-        if ($key === 'whatsapp_notifications_enabled') {
-            return 'boolean';
         }
 
         return 'string';

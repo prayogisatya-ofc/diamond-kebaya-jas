@@ -49,14 +49,14 @@
                     <td>{{ $item->productVariant?->name ?? $item->variant_name_snapshot ?? '-' }}</td>
                     <td>{{ $item->productVariant?->sku ?? '-' }}</td>
                     <td class="text-right">{{ $item->total_quantity }}</td>
-                    <td class="text-right">Rp{{ number_format($item->total_revenue, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($item->total_revenue, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
     <div class="summary">
-        Total produk: {{ $items->count() }} | Total qty: {{ $items->sum('total_quantity') }} | Total pendapatan: Rp{{ number_format($items->sum('total_revenue'), 0, ',', '.') }}
+        Total produk: {{ $items->count() }} | Total qty: {{ $items->sum('total_quantity') }} | Total pendapatan: Rp {{ number_format($items->sum('total_revenue'), 0, ',', '.') }}
     </div>
 
     <div class="footer">

@@ -12,6 +12,7 @@ import {
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import Breadcrumb from '@/Components/Breadcrumb.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
+import GlobalSpinner from '@/Components/GlobalSpinner.vue'
 import GlobalToast from '@/Components/GlobalToast.vue'
 import UserMenu from '@/Components/UserMenu.vue'
 import { useConfirm } from '@/Composables/useConfirm'
@@ -234,5 +235,6 @@ watch(themeStyle, (style) => applyThemeVariables(style), { immediate: true })
 
         <ConfirmDialog />
         <GlobalToast />
+        <GlobalSpinner />
     </div>
 </template>

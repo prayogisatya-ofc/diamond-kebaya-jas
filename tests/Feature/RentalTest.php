@@ -10,7 +10,7 @@ use App\Models\RentalItem;
 use App\Models\RentalPackage;
 use App\Models\RentalPackageItem;
 use App\Models\RentalPayment;
-use App\Models\RentalWhatsappNotification;
+
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -1628,12 +1628,6 @@ class RentalTest extends TestCase
             'rental_id' => $rental->id,
             'created_by' => $this->user->id,
         ]);
-        $notification = RentalWhatsappNotification::query()->create([
-            'rental_id' => $rental->id,
-            'type' => 'return_reminder_today',
-            'scheduled_for' => now(),
-        ]);
-
         $this->actingAs($this->user)
             ->delete(route('rentals.destroy', $rental))
             ->assertRedirect(route('rentals.index', absolute: false))
@@ -1642,7 +1636,6 @@ class RentalTest extends TestCase
         $this->assertModelMissing($rental);
         $this->assertDatabaseMissing('rental_items', ['id' => $item->id]);
         $this->assertDatabaseMissing('rental_payments', ['id' => $payment->id]);
-        $this->assertDatabaseMissing('rental_whatsapp_notifications', ['id' => $notification->id]);
     }
 
     public function test_staff_can_not_delete_rental(): void

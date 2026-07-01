@@ -60,7 +60,6 @@ class StoreSettingTest extends TestCase
                 'store_whatsapp_number' => '081200001111',
                 'invoice_footer_note' => 'Footer UAT invoice.',
                 'primary_color' => '#7c3aed',
-                'whatsapp_notifications_enabled' => false,
                 'logo' => $logo,
             ])
             ->assertRedirect(route('settings.edit', absolute: false));
@@ -72,7 +71,6 @@ class StoreSettingTest extends TestCase
         $this->assertSame('081200001111', $profile['store_whatsapp_number']);
         $this->assertSame('Footer UAT invoice.', $profile['invoice_footer_note']);
         $this->assertSame('#7c3aed', $profile['primary_color']);
-        $this->assertFalse($profile['whatsapp_notifications_enabled']);
         $this->assertNotNull($profile['store_logo_path']);
         $this->assertNotNull($profile['store_favicon_path']);
         Storage::disk('public')->assertExists($profile['store_logo_path']);

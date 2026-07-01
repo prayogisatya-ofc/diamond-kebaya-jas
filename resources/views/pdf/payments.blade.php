@@ -55,9 +55,9 @@
                     <td>{{ $payment->paid_at ? $payment->paid_at->format('d/m/Y H:i') : '-' }}</td>
                     <td>{{ $payment->rental?->invoice_number ?? '-' }}</td>
                     <td>{{ $payment->rental?->customer?->name ?? '-' }}</td>
-                    <td><span class="badge badge-{{ $payment->payment_type }}">{{ $payment->payment_type }}</span></td>
+                    <td><span class="badge badge-{{ $payment->payment_type }}">{{ $payment->payment_type === 'dp' ? 'DP' : ($payment->payment_type === 'pelunasan' ? 'Pelunasan' : ($payment->payment_type === 'denda' ? 'Denda' : ($payment->payment_type === 'refund' ? 'Refund' : ($payment->payment_type === 'adjustment' ? 'Adjustment' : $payment->payment_type))) }}</span></td>
                     <td>{{ $payment->payment_method }}</td>
-                    <td class="text-right">Rp{{ number_format($payment->amount, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($payment->amount, 0, ',', '.') }}</td>
                     <td>{{ $payment->creator?->name ?? '-' }}</td>
                     <td>{{ $payment->notes ?: '-' }}</td>
                 </tr>
@@ -66,7 +66,7 @@
     </table>
 
     <div class="summary">
-        Total: Rp{{ number_format($payments->sum('amount'), 0, ',', '.') }} | {{ $payments->count() }} transaksi
+        Total: Rp {{ number_format($payments->sum('amount'), 0, ',', '.') }} | {{ $payments->count() }} transaksi
     </div>
 
     <div class="footer">

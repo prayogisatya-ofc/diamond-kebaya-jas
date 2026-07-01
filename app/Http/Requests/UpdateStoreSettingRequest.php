@@ -7,15 +7,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateStoreSettingRequest extends FormRequest
 {
-    protected function prepareForValidation(): void
-    {
-        if ($this->has('whatsapp_notifications_enabled')) {
-            $this->merge([
-                'whatsapp_notifications_enabled' => $this->boolean('whatsapp_notifications_enabled'),
-            ]);
-        }
-    }
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -37,7 +28,6 @@ class UpdateStoreSettingRequest extends FormRequest
             'store_whatsapp_number' => ['required', 'string', 'max:50'],
             'invoice_footer_note' => ['nullable', 'string', 'max:1000'],
             'primary_color' => ['required', 'hex_color'],
-            'whatsapp_notifications_enabled' => ['sometimes', 'boolean'],
             'whatsapp_rental_message_template' => ['nullable', 'string', 'max:2000'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];

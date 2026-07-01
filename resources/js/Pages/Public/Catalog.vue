@@ -57,7 +57,44 @@ const form = reactive({
 
 const allProducts = computed(() => props.products.data || [])
 const allPackages = computed(() => props.packages || [])
-const allCatalogItems = computed(() => sortCatalogItems([...allProducts.value, ...allPackages.value]))
+const catalogAccumulator = ref([])
+const previousProductIds = ref('')
+
+watch(
+    [allProducts, allPackages, () => form.category, () => form.search, () => form.sort, favoriteOnly, favoriteIds],
+    ([products, packages]) => {
+        const snapshot = [...products.map((p) => p.id), ...packages.map((p) => p.id)].join(',')
+        const merged = [...products, ...packages]
+        const currentIds = new Set(merged.map((item) => `${item.type || 'product'}-${item.id}`))
+
+        if (previousProductIds.value === '') {
+            catalogAccumulator.value = sortCatalogItems(merged)
+        } else {
+            const existingIds = new Set((previousProductIds.value || '').split(',').filter(Boolean))
+            const freshIds = new Set(snapshot.split(',').filter(Boolean))
+            const isAppend = freshIds.size > existingIds.size
+                && [...existingIds].every((id) => freshIds.has(id))
+
+            if (isAppend) {
+                const existingAccum = catalogAccumulator.value
+                const existingKeys = new Set(existingAccum.map((item) => `${item.type || 'product'}-${item.id}`))
+                const newItems = merged.filter((item) => !existingKeys.has(`${item.type || 'product'}-${item.id}`))
+
+                if (newItems.length > 0) {
+                    const sortedNew = sortCatalogItems(newItems)
+                    catalogAccumulator.value = [...existingAccum, ...sortedNew]
+                }
+            } else {
+                catalogAccumulator.value = sortCatalogItems(merged)
+            }
+        }
+
+        previousProductIds.value = snapshot
+    },
+    { deep: true, immediate: true },
+)
+
+const allCatalogItems = computed(() => catalogAccumulator.value)
 const primaryCategories = computed(() => props.categories.slice(0, 7))
 const overflowCategories = computed(() => props.categories.slice(7))
 const hasOverflowSelection = computed(() => overflowCategories.value.some((category) => category.id === form.category))

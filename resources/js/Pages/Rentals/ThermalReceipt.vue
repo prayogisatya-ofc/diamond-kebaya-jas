@@ -41,6 +41,20 @@ function formatDate(value) {
     }
 
     const parsedDate = new Date(value)
+
+    return new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+    }).format(parsedDate)
+}
+
+function formatDateTime(value) {
+    if (!value) {
+        return '-'
+    }
+
+    const parsedDate = new Date(value)
     const datePart = new Intl.DateTimeFormat('id-ID', {
         day: '2-digit',
         month: '2-digit',
@@ -165,7 +179,7 @@ function buildEscPosReceipt() {
     text += '\x1B\x61\x00'
     text += separator
     text += line('No', props.rental.invoice_number, width)
-    text += line('Tgl', formatDate(props.rental.created_at), width)
+    text += line('Tgl', formatDateTime(props.rental.created_at), width)
     text += line('Kasir', props.rental.creator?.name || '-', width)
     text += line('Customer', props.rental.customer?.name || '-', width)
     text += line('WA', props.rental.customer?.whatsapp_number || '-', width)
@@ -178,7 +192,7 @@ function buildEscPosReceipt() {
 
     props.items.forEach((item) => {
         const itemName = item.variant_name_snapshot
-            ? `${item.item_name_snapshot} (${item.variant_name_snapshot})`
+            ? `${item.item_name_snapshot} (${item.variant_name_snapshot})${item.variant_sku ? ` [SKU: ${item.variant_sku}]` : ""}`
             : item.item_name_snapshot
 
         text += `${wrapText(itemName, width)}\n`
@@ -314,7 +328,7 @@ async function printSerialReceipt() {
                 </div>
                 <div>
                     <span>Tgl</span>
-                    <strong>{{ formatDate(rental.created_at) }}</strong>
+                    <strong>{{ formatDateTime(rental.created_at) }}</strong>
                 </div>
                 <div>
                     <span>Kasir</span>
@@ -353,7 +367,7 @@ async function printSerialReceipt() {
                 <div v-for="item in items" :key="item.id" class="item">
                     <div class="item-name">
                         <strong>{{ item.item_name_snapshot }}</strong>
-                        <span v-if="item.variant_name_snapshot">({{ item.variant_name_snapshot }})</span>
+                        <span v-if="item.variant_name_snapshot">({{ item.variant_name_snapshot }})</span><span v-if="item.variant_sku" class="sku-badge">SKU: {{ item.variant_sku }}</span>
                     </div>
                     <p v-if="item.package_name" class="muted">Paket: {{ item.package_name }}</p>
                     <p v-if="item.notes" class="muted">Catatan: {{ item.notes }}</p>
@@ -399,7 +413,7 @@ async function printSerialReceipt() {
                 <section>
                     <p class="section-title">Pembayaran</p>
                     <div v-for="payment in payments" :key="payment.id" class="payment">
-                        <span>{{ formatDate(payment.paid_at) }} {{ paymentTypeLabel(payment.payment_type) }} {{ paymentMethodLabel(payment.payment_method) }}</span>
+                        <span>{{ formatDateTime(payment.paid_at) }} {{ paymentTypeLabel(payment.payment_type) }} {{ paymentMethodLabel(payment.payment_method) }}</span>
                         <strong>{{ formatMoney(payment.amount) }}</strong>
                     </div>
                 </section>

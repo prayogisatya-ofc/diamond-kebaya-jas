@@ -52,7 +52,7 @@
                     <td>{{ $expense->description }}</td>
                     <td><span class="badge badge-{{ $expense->category }}">{{ $expense->category }}</span></td>
                     <td>{{ $expense->expense_date instanceof \Carbon\Carbon ? $expense->expense_date->format('d/m/Y') : $expense->expense_date }}</td>
-                    <td class="text-right">Rp{{ number_format($expense->amount, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($expense->amount, 0, ',', '.') }}</td>
                     <td>{{ $expense->creator?->name ?? '-' }}</td>
                     <td>{{ $expense->notes ?: '-' }}</td>
                 </tr>
@@ -61,7 +61,7 @@
     </table>
 
     <div class="summary">
-        Total pengeluaran: Rp{{ number_format($totalAmount, 0, ',', '.') }} | {{ $expenses->count() }} catatan
+        Total pengeluaran: Rp {{ number_format($totalAmount, 0, ',', '.') }} | {{ $expenses->count() }} catatan
     </div>
 
     <div class="footer">

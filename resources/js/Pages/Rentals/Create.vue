@@ -5,7 +5,6 @@ import { ArrowLeft, Check, ChevronDown, PackagePlus, Plus, Save, Search, Shoppin
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Button from '@/Components/Button.vue'
 import CurrencyInput from '@/Components/CurrencyInput.vue'
-import DateTimePicker from '@/Components/DateTimePicker.vue'
 import Input from '@/Components/Input.vue'
 import PageHeader from '@/Components/PageHeader.vue'
 import { useConfirm } from '@/Composables/useConfirm'
@@ -496,19 +495,25 @@ function submit() {
                         <span v-if="form.errors.guarantee_type" class="text-sm text-diamond-danger">{{ form.errors.guarantee_type }}</span>
                     </label>
 
-                    <DateTimePicker
-                        v-model="form.pickup_at"
-                        :error="form.errors.pickup_at"
-                        label="Jadwal ambil"
-                        placeholder="Pilih jadwal ambil"
-                    />
+                    <label class="grid gap-2">
+                        <span class="text-sm font-semibold text-diamond-text">Jadwal ambil</span>
+                        <input
+                            v-model="form.pickup_at"
+                            class="min-h-12 w-full rounded-xl border border-diamond-border bg-white px-4 py-3 text-sm text-diamond-text outline-none transition focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10"
+                            type="date"
+                        >
+                        <span v-if="form.errors.pickup_at" class="text-sm text-diamond-danger">{{ form.errors.pickup_at }}</span>
+                    </label>
 
-                    <DateTimePicker
-                        v-model="form.return_due_at"
-                        :error="form.errors.return_due_at"
-                        label="Jadwal kembali"
-                        placeholder="Pilih jadwal kembali"
-                    />
+                    <label class="grid gap-2">
+                        <span class="text-sm font-semibold text-diamond-text">Jadwal kembali</span>
+                        <input
+                            v-model="form.return_due_at"
+                            class="min-h-12 w-full rounded-xl border border-diamond-border bg-white px-4 py-3 text-sm text-diamond-text outline-none transition focus:border-diamond-primary focus:ring-4 focus:ring-diamond-primary/10"
+                            type="date"
+                        >
+                        <span v-if="form.errors.return_due_at" class="text-sm text-diamond-danger">{{ form.errors.return_due_at }}</span>
+                    </label>
                 </div>
 
                 <label class="grid gap-2">

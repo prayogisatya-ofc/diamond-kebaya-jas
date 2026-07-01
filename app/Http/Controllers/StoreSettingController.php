@@ -47,8 +47,6 @@ class StoreSettingController extends Controller
             'store_whatsapp_number' => $validated['store_whatsapp_number'],
             'invoice_footer_note' => $validated['invoice_footer_note'] ?? null,
             'primary_color' => $validated['primary_color'],
-            'whatsapp_notifications_enabled' => $validated['whatsapp_notifications_enabled'] ?? $profile['whatsapp_notifications_enabled'],
-            'whatsapp_rental_message_template' => $validated['whatsapp_rental_message_template'] ?? $profile['whatsapp_rental_message_template'],
             'store_logo_path' => $logoPath,
             'store_favicon_path' => $faviconPath,
         ]);

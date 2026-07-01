@@ -2,6 +2,7 @@
 import { Link, usePage } from '@inertiajs/vue3'
 import { route as ziggyRoute } from 'ziggy-js'
 import { computed, ref } from 'vue'
+import GlobalSpinner from '@/Components/GlobalSpinner.vue'
 import PublicIcon from '../Components/Public/PublicIcon.vue'
 
 const props = defineProps({
@@ -174,6 +175,7 @@ function closeMobileMenu() {
         </header>
 
         <slot />
+        <GlobalSpinner />
 
         <footer class="mt-16 border-t border-slate-100 bg-slate-50">
             <div class="mx-auto max-w-[1440px] px-4 py-8 md:px-8 xl:px-12">

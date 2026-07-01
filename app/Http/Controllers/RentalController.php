@@ -12,7 +12,6 @@ use App\Models\RentalPackage;
 use App\Models\RentalPackageItem;
 use App\Models\RentalPayment;
 use App\Models\Setting;
-use App\Services\FonnteWhatsappService;
 use App\Services\RentalAvailabilityService;
 use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +23,7 @@ use Inertia\Response;
 
 class RentalController extends Controller
 {
-    public function __construct(private readonly FonnteWhatsappService $whatsappService) {}
+    public function __construct() {}
 
     public function index(Request $request): Response
     {
@@ -131,7 +130,6 @@ class RentalController extends Controller
             return $rental;
         });
 
-        $this->whatsappService->sendRentalCreated($rental);
 
         return redirect()->route('rentals.show', $rental)->with('success', 'Rental berhasil dibuat.');
     }
@@ -434,6 +432,7 @@ class RentalController extends Controller
             'product_variant_id' => $item->product_variant_id,
             'item_name_snapshot' => $item->item_name_snapshot,
             'variant_name_snapshot' => $item->variant_name_snapshot,
+            'variant_sku' => $item->productVariant?->sku,
             'quantity' => $item->quantity,
             'unit_price' => $item->unit_price,
             'discount_amount' => $item->discount_amount,

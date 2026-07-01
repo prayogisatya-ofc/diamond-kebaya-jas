@@ -87,14 +87,6 @@ class Rental extends Model
     }
 
     /**
-     * @return HasMany<RentalWhatsappNotification, $this>
-     */
-    public function whatsappNotifications(): HasMany
-    {
-        return $this->hasMany(RentalWhatsappNotification::class);
-    }
-
-    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -102,8 +94,8 @@ class Rental extends Model
     protected function casts(): array
     {
         return [
-            'pickup_at' => 'datetime',
-            'return_due_at' => 'datetime',
+            'pickup_at' => 'date',
+            'return_due_at' => 'date',
             'picked_up_at' => 'datetime',
             'returned_at' => 'datetime',
             'subtotal_amount' => 'decimal:2',
