@@ -66,7 +66,7 @@ class DashboardController extends Controller
         return Rental::query()
             ->with('customer:id,name,whatsapp_number')
             ->where('status', 'booked')
-            ->whereBetween('pickup_at', [$startOfDay, $endOfDay]);
+            ->whereDate('pickup_at', '=', $startOfDay->toDateString());
     }
 
     private function returnTodayQuery(Carbon $startOfDay, Carbon $endOfDay)
@@ -74,7 +74,7 @@ class DashboardController extends Controller
         return Rental::query()
             ->with('customer:id,name,whatsapp_number')
             ->whereIn('status', ['picked_up', 'overdue'])
-            ->whereBetween('return_due_at', [$startOfDay, $endOfDay]);
+            ->whereDate('return_due_at', '=', $startOfDay->toDateString());
     }
 
     private function overdueQuery(Carbon $now)
@@ -82,7 +82,7 @@ class DashboardController extends Controller
         return Rental::query()
             ->with('customer:id,name,whatsapp_number')
             ->whereIn('status', ['picked_up', 'overdue'])
-            ->where('return_due_at', '<', $now);
+            ->whereDate('return_due_at', '<', $now->toDateString());
     }
 
     /**
